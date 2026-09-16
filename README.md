@@ -131,7 +131,7 @@ TheLastCodeBenders —  working across an "Avatar" thematic role split:
 | Tshepang Mogane | Firebender | Backend & security engineering (FastAPI, SSDLC) |
 | Keamogetswe Mokoena | Earthbender | Product strategy & go-to-market |
 | Aphiwe Vuba | Airbender | Cultural research & storytelling |
-| Lauryn Steenkamp | The Avatar | Systems integration & offline data |
+| Lauren Steenkamp | The Avatar | Systems integration & offline data |
 
 ---
 *#GKHack26*
