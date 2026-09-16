@@ -10,7 +10,7 @@
 
 South African RailWaze turns the 26-hour Pretoria–Cape Town rail journey into an interactive, offline-capable travel companion. Instead of staring at empty Karoo landscape for a day, passengers get a live 3D map of the terrain they're crossing, geofenced audio stories about the towns they're passing, a "then vs. now" photo archive of historic stations, and a lightweight passport game that rewards them for reaching waypoints.
 
-The core idea: one unified viewport, not a set of disconnected app tabs. As the train moves along the route, the map layer updates in real time and three contextual panels — audio, archive, passport — surface automatically based on where the train is.
+The core idea: one unified viewport, not a set of disconnected app tabs. As the train moves along the route, the map layer updates in real time and three contextual panels: audio, archive, passport, surface automatically based on where the train is.
 
 South African RailWaze is TheLastCodeBenders' submission to the Train Journey Mapper track of the Geekulcha Annual Hackathon 2026, built to the 2026 theme, **Build for use**: a solution with identified users, a validated problem, security-by-design, and a real go-to-market plan, ready to be used beyond demo day. The track itself is also positioned as a foundation for Geekulcha's follow-on Train Tourism Hackathon in 2027.
 
