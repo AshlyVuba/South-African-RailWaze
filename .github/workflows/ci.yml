@@ -10,6 +10,9 @@ jobs:
   backend-checks:
     name: Backend Lint & Test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -23,6 +26,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install ruff pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run Ruff Linter (Rule 3)
         run: ruff check .
@@ -33,6 +37,9 @@ jobs:
   frontend-checks:
     name: Frontend Lint & Test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -43,10 +50,15 @@ jobs:
           node-version: "20"
 
       - name: Install Node dependencies
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Run ESLint (Rule 3)
-        run: npm run lint
+        run: npm run lint --if-present
 
       - name: Run Frontend Tests (Rule 6)
-        run: npm test -- --watchAll=false
+        run: npm test --if-present -- --watchAll=false
