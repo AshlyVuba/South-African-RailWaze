@@ -80,29 +80,52 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         </p>
 
         {onSelectWaypoint && (
-          <button
-            type="button"
-            onClick={() =>
-              onSelectWaypoint({
-                stationId: 'kimberley',
-                name: 'Kimberley Station',
-              })
-            }
-            style={{
-              marginTop: '12px',
-              padding: '6px 14px',
-              borderRadius: '6px',
-              backgroundColor: '#2563eb',
-              color: '#ffffff',
-              fontSize: '0.8125rem',
-              fontWeight: 500,
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {/* PLACEHOLDER_TEST_WAYPOINT */}
-            Select Kimberley Station (Test Vault)
-          </button>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '12px' }}>
+            <button
+              type="button"
+              onClick={() =>
+                onSelectWaypoint({
+                  stationId: 'pretoria',
+                  name: 'Pretoria Station',
+                })
+              }
+              style={{
+                padding: '6px 14px',
+                borderRadius: '6px',
+                backgroundColor: '#2563eb',
+                color: '#ffffff',
+                fontSize: '0.8125rem',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {/* PLACEHOLDER_TEST_WAYPOINT_PRETORIA */}
+              Select Pretoria Station
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onSelectWaypoint({
+                  stationId: 'kimberley',
+                  name: 'Kimberley Station',
+                })
+              }
+              style={{
+                padding: '6px 14px',
+                borderRadius: '6px',
+                backgroundColor: '#374151',
+                color: '#ffffff',
+                fontSize: '0.8125rem',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {/* PLACEHOLDER_TEST_WAYPOINT_KIMBERLEY */}
+              Select Kimberley Station
+            </button>
+          </div>
         )}
       </div>
 
