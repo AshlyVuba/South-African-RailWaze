@@ -48,8 +48,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
-          cache: "npm"
-          cache-dependency-path: apps/web/package-lock.json
+          # Re-enable caching once apps/web/package-lock.json is committed:
+          # cache: "npm"
+          # cache-dependency-path: apps/web/package-lock.json
 
       - name: Install Node dependencies
         run: |
@@ -63,4 +64,4 @@ jobs:
         run: npm run lint --if-present
 
       - name: Run Frontend Tests (Rule 6)
-        run: npm test --if-present
+        run: npm test --if-present -- --watchAll=false
