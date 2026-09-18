@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps
+        working-directory: apps/web
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -47,7 +47,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
+          # Re-enable caching once apps/web/package-lock.json is committed:
+          # cache: "npm"
+          # cache-dependency-path: apps/web/package-lock.json
 
       - name: Install Node dependencies
         run: |
