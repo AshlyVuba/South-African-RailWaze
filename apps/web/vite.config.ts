@@ -1,13 +1,21 @@
-/// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
-  },
-});
+export default tseslint.config(
+    {
+      ignores: ['dist/**', 'node_modules/**', '*.config.*'],
+    },
+    js.configs.recommended,
+    ...tseslint.configs.recommended,
+    {
+      rules: {
+        '@typescript-eslint/no-unused-vars': [
+          'error',
+          {
+            argsIgnorePattern: '^_',
+            varsIgnorePattern: '^_',
+          },
+        ],
+      },
+    }
+);
