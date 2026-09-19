@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://railwaze.geekulcha.co.za/schemas/trivia-passport.schema.json",
+  "title": "TriviaAndPassport",
+  "description": "Schema for waypoint trivia items and user passport progression.",
+  "type": "object",
+  "definitions": {
+    "TriviaQuestion": {
+      "type": "object",
+      "required": ["id", "waypoint_id", "question", "options", "answer_index", "explanation"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^trivia-[a-z0-9-]+$"
+        },
+        "waypoint_id": {
+          "type": "string"
+        },
+        "question": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "answer_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "explanation": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TravelerRank": {
+      "type": "string",
+      "enum": ["Stoker", "Track Master", "Karoo Scout", "Rail Legend"]
+    },
+    "PassportStamp": {
+      "type": "object",
+      "required": ["stamp_id", "waypoint_id", "collected_at"],
+      "properties": {
+        "stamp_id": { "type": "string" },
+        "waypoint_id": { "type": "string" },
+        "collected_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PassportState": {
+      "type": "object",
+      "required": ["session_id", "current_rank", "score", "collected_stamps", "completed_trivia_ids"],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "current_rank": {
+          "$ref": "#/definitions/TravelerRank"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "collected_stamps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PassportStamp"
+          }
+        },
+        "completed_trivia_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
