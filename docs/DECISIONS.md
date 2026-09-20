@@ -7,3 +7,4 @@
 - **Image Comparison:** Implemented via responsive CSS clip-path inside `MemoryVaultSlider.tsx` with explicit `PLACEHOLDER_` assets pending verified archival records.
 
 - 2026-09-18: Configured Vitest + JSDOM in apps/web; wired UnifiedViewport bottom-sheet drawer for MemoryVaultSlider upon station selection.
+- **2026-09-18**: Core data contract frozen at `v1.0.0` covering `waypoint.schema.json`, `trivia-passport.schema.json`, and `api-openapi.yaml` for Iteration 2 frontend and backend parity.
