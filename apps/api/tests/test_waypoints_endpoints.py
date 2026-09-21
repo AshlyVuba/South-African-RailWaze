@@ -1,4 +1,4 @@
-from app.main import app  # Changed from apps.api.app.main
+from app.routers.main import app # Changed from apps.api.app.main
 from fastapi.testclient import TestClient
 
 client = TestClient(app)

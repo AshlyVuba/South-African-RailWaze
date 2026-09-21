@@ -2,11 +2,9 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.schemas.trivia import TriviaQuestion
 from app.schemas.waypoint import Waypoint
+from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
 
 router = APIRouter(prefix="/waypoints", tags=["Waypoints & Trivia"])
-
-SEED_WAYPOINTS: list[Waypoint] = []
-SEED_TRIVIA: dict[str, list[TriviaQuestion]] = {}
 
 
 @router.get("", response_model=list[Waypoint], summary="Get all anchor waypoints")
