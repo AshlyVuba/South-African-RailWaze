@@ -1,22 +1,19 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TriviaOption(BaseModel):
-    option_id: str = Field(..., description="Unique option identifier")
-    text: str = Field(..., description="Option answer display text")
+    model_config = ConfigDict(extra="forbid")
+
+    option_id: str
+    text: str
 
 
 class TriviaQuestion(BaseModel):
-    id: str = Field(..., description="Unique question identifier")
-    waypoint_id: str = Field(..., description="Associated waypoint ID")
-    question: str = Field(..., description="Trivia question text")
-    options: list[TriviaOption] = Field(
-        ..., min_items=2, description="List of possible answer options"
-    )
-    correct_option_id: str = Field(..., description="ID of the correct option")
-    points: int = Field(
-        default=10, ge=1, description="Points awarded for correct answer"
-    )
+    model_config = ConfigDict(extra="forbid")
 
-    class Config:
-        extra = "forbid"
+    id: str
+    waypoint_id: str
+    question: str
+    options: list[TriviaOption] = Field(..., min_length=2, max_length=4)
+    correct_option_id: str
+    points: int = Field(default=10, ge=1)
