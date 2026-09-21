@@ -1,6 +1,5 @@
-from apps.api.app.schemas.waypoint import Waypoint
-
 from apps.api.app.schemas.trivia import TriviaOption, TriviaQuestion
+from apps.api.app.schemas.waypoint import Waypoint
 
 # Seed data for 4 anchor stations across the Pretoria-to-Cape Town corridor
 SEED_WAYPOINTS: list[Waypoint] = [
