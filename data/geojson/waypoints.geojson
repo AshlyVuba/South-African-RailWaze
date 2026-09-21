@@ -1,0 +1,110 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "wp_pretoria",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [28.1895, -25.7565]
+      },
+      "properties": {
+        "id": "wp_pretoria",
+        "name": "Pretoria Station",
+        "km_mark": 0.0,
+        "biome": "high_altitude_plateau",
+        "elevation_m": 1339,
+        "memory_vault": {
+          "beforeImageUrl": "PLACEHOLDER_pretoria_station_1910.jpg",
+          "afterImageUrl": "PLACEHOLDER_pretoria_station_modern.jpg",
+          "caption": "Herbert Baker-designed station portico rebuilt after the 1910 fire.",
+          "year": 1910
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "wp_kimberley",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.7645, -28.7383]
+      },
+      "properties": {
+        "id": "wp_kimberley",
+        "name": "Kimberley Station",
+        "km_mark": 612.0,
+        "biome": "karoo_basin",
+        "elevation_m": 1210,
+        "memory_vault": {
+          "beforeImageUrl": "PLACEHOLDER_kimberley_station_1890.jpg",
+          "afterImageUrl": "PLACEHOLDER_kimberley_station_modern.jpg",
+          "caption": "Pivotal diamond rush rail nexus connecting the Cape colony northward.",
+          "year": 1890
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "wp_matjiesfontein",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [20.5828, -33.2307]
+      },
+      "properties": {
+        "id": "wp_matjiesfontein",
+        "name": "Matjiesfontein Station",
+        "km_mark": 1331.0,
+        "biome": "great_karoo",
+        "elevation_m": 890,
+        "memory_vault": {
+          "beforeImageUrl": "PLACEHOLDER_matjiesfontein_1899.jpg",
+          "afterImageUrl": "PLACEHOLDER_matjiesfontein_modern.jpg",
+          "caption": "Victorian railway health resort and military HQ during the Anglo-Boer War.",
+          "year": 1899
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "wp_hex_river",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [19.6897, -33.4735]
+      },
+      "properties": {
+        "id": "wp_hex_river",
+        "name": "Hex River Pass (De Doorns)",
+        "km_mark": 1450.0,
+        "biome": "cape_fold_mountains",
+        "elevation_m": 475,
+        "memory_vault": {
+          "beforeImageUrl": "PLACEHOLDER_hex_river_tunnels_1948.jpg",
+          "afterImageUrl": "PLACEHOLDER_hex_river_tunnels_modern.jpg",
+          "caption": "Dramatic 1:40 gradient descent through the Hex River mountain pass.",
+          "year": 1948
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "wp_cape_town",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [18.4241, -33.9249]
+      },
+      "properties": {
+        "id": "wp_cape_town",
+        "name": "Cape Town Station",
+        "km_mark": 1600.0,
+        "biome": "coastal_fynbos",
+        "elevation_m": 15,
+        "memory_vault": {
+          "beforeImageUrl": "PLACEHOLDER_cape_town_station_1960.jpg",
+          "afterImageUrl": "PLACEHOLDER_cape_town_station_modern.jpg",
+          "caption": "Southern terminus of the Trans-Karoo line beneath Table Mountain.",
+          "year": 1960
+        }
+      }
+    }
+  ]
+}
