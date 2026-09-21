@@ -1,17 +1,17 @@
-import pytest
-from fastapi import FastAPI, HTTPException, status
-from fastapi.testclient import TestClient
 from apps.api.app.schemas.waypoint import Waypoint
-from apps.api.app.schemas.trivia import TriviaQuestion
-from apps.api.app.schemas.passport import PassportState
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 app = FastAPI()
+
 
 @app.post("/test/waypoint")
 async def validate_waypoint(data: Waypoint):
     return data
 
+
 client = TestClient(app)
+
 
 def test_valid_waypoint_passes():
     payload = {
@@ -20,10 +20,11 @@ def test_valid_waypoint_passes():
         "latitude": -30.6497,
         "longitude": 24.0122,
         "elevation_meters": 1240.0,
-        "tags": ["heritage", "karoo"]
+        "tags": ["heritage", "karoo"],
     }
     response = client.post("/test/waypoint", json=payload)
     assert response.status_code == 200
+
 
 def test_malformed_latitude_rejected_with_422():
     # Invalid latitude > 90
@@ -31,11 +32,12 @@ def test_malformed_latitude_rejected_with_422():
         "id": "WP_INVALID",
         "name": "Invalid Location",
         "latitude": 105.0,
-        "longitude": 24.0122
+        "longitude": 24.0122,
     }
     response = client.post("/test/waypoint", json=payload)
     assert response.status_code == 422
     assert response.json()["detail"][0]["type"] == "less_than_equal"
+
 
 def test_divergent_extra_field_rejected_with_422():
     # Attempting to send an undocumented field forbidden by extra = 'forbid'
@@ -44,7 +46,7 @@ def test_divergent_extra_field_rejected_with_422():
         "name": "De Aar Station",
         "latitude": -30.6497,
         "longitude": 24.0122,
-        "invented_field": "Should fail contract"
+        "invented_field": "Should fail contract",
     }
     response = client.post("/test/waypoint", json=payload)
     assert response.status_code == 422
