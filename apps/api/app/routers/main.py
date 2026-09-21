@@ -1,7 +1,6 @@
+from app.routers import waypoints
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.routers import waypoints
 
 app = FastAPI(
     title="South African RailWaze API",
