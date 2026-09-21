@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: South African RailWaze API
+  description: Core backend service contracts for Iteration 2
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local Development Server
+paths:
+  /waypoints:
+    get:
+      summary: Retrieve all anchor waypoints
+      description: Returns the list of 4 key anchor waypoints along the rail route.
+      operationId: getWaypoints
+      responses:
+        '200':
+          description: Successful retrieval of waypoints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './waypoint.schema.json'
+
+  /waypoints/{id}/trivia:
+    get:
+      summary: Get trivia questions for a waypoint
+      description: Fetches localized cultural and historical trivia for a given waypoint.
+      operationId: getWaypointTrivia
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Waypoint identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful trivia payload
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './trivia-passport.schema.json#/definitions/TriviaQuestion'
+        '404':
+          description: Waypoint not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+
+  /passport/{sessionId}:
+    get:
+      summary: Get user passport state
+      description: Fetches active user rank, collected stamps, and completed trivia.
+      operationId: getPassportBySession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: Unique traveler session identifier (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current user passport and journey progression
+          content:
+            application/json:
+              schema:
+                $ref: './trivia-passport.schema.json#/definitions/PassportState'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string

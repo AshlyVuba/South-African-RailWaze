@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://railwaze.geekulcha.co.za/schemas/waypoint.schema.json",
+  "title": "Waypoint",
+  "description": "Schema defining waypoints along the Pretoria-to-Cape Town rail corridor.",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "lat",
+    "lng",
+    "elevation_m",
+    "biome",
+    "audio_capsule_id",
+    "memory_vault_id",
+    "passport_stamp_id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "enum": [
+        "station-pretoria",
+        "station-kimberley",
+        "station-matjiesfontein",
+        "station-cape-town"
+      ],
+      "description": "Unique identifier for the anchor station or waypoint."
+    },
+    "name": {
+      "type": "string",
+      "enum": [
+        "Pretoria",
+        "Kimberley",
+        "Matjiesfontein",
+        "Hex River / Cape Town"
+      ],
+      "description": "Display name of the station or corridor waypoint."
+    },
+    "lat": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90,
+      "description": "Latitude coordinate in WGS84."
+    },
+    "lng": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180,
+      "description": "Longitude coordinate in WGS84."
+    },
+    "elevation_m": {
+      "type": "number",
+      "description": "Altitude above sea level in meters."
+    },
+    "biome": {
+      "type": "string",
+      "enum": ["Highveld", "Diamond Fields", "Great Karoo", "Cape Fynbos"],
+      "description": "Regional biome corresponding to the transit corridor."
+    },
+    "audio_capsule_id": {
+      "type": "string",
+      "pattern": "^audio-[a-z0-9-]+$",
+      "description": "Reference key to the geofenced folklore audio asset."
+    },
+    "memory_vault_id": {
+      "type": "string",
+      "pattern": "^vault-[a-z0-9-]+$",
+      "description": "Reference key to the Then vs Now archival imagery."
+    },
+    "passport_stamp_id": {
+      "type": "string",
+      "pattern": "^stamp-[a-z0-9-]+$",
+      "description": "Badge identifier awarded upon waypoint arrival."
+    }
+  },
+  "additionalProperties": false
+}

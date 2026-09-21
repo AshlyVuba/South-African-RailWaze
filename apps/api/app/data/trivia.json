@@ -1,0 +1,54 @@
+[
+  {
+    "id": "trivia-pretoria-nzasm",
+    "waypoint_id": "station-pretoria",
+    "question": "Which historic railway company built the late-19th-century line connecting Pretoria to the eastern border during the Transvaal gold rush era?",
+    "options": [
+      "Cape Government Railways (CGR)",
+      "Nederlandsche Zuid-Afrikaansche Spoorweg-Maatschappij (NZASM)",
+      "Central South African Railways (CSAR)",
+      "Natal Government Railways (NGR)"
+    ],
+    "answer_index": 1,
+    "explanation": "NZASM operated railway concessions in the South African Republic (Transvaal) during the gold rush era, constructing the original Pretoria station and key transit links."
+  },
+  {
+    "id": "trivia-kimberley-bighole",
+    "waypoint_id": "station-kimberley",
+    "question": "What primary geological feature and historic open-pit mine defined Kimberley's status along the interior rail route?",
+    "options": [
+      "The Big Hole (Kimberley Mine)",
+      "Cullinan Kimberlite Pipe",
+      "Pilgrim's Rest Alluvial Basin",
+      "Jagersfontein Deep Shaft"
+    ],
+    "answer_index": 0,
+    "explanation": "Kimberley's Big Hole was excavated by hand between 1871 and 1914, sparking the diamond rush that spurred railway expansion deep into the interior."
+  },
+  {
+    "id": "trivia-matjiesfontein-logan",
+    "waypoint_id": "station-matjiesfontein",
+    "question": "Which entrepreneur founded Matjiesfontein as a health resort and railway refreshment stop in the Great Karoo?",
+    "options": [
+      "Cecil John Rhodes",
+      "James Douglas Logan",
+      "Olive Schreiner",
+      "Sir Herbert Baker"
+    ],
+    "answer_index": 1,
+    "explanation": "James Douglas 'Jimmy' Logan founded Matjiesfontein in the 1880s, leveraging the dry Karoo air as a Victorian health retreat and refreshing passengers on the rail line."
+  },
+  {
+    "id": "trivia-hexriver-pass",
+    "waypoint_id": "station-cape-town",
+    "question": "What engineering solution was required to conquer the steep 1-in-40 gradient drop through the Hex River Pass into the Western Cape valleys?",
+    "options": [
+      "A cogwheel rack-and-pinion ascent",
+      "The Hex River railway tunnel and pass alignment",
+      "A funicular rail cable counterweight",
+      "A high-altitude timber trestle viaduct"
+    ],
+    "answer_index": 1,
+    "explanation": "The Hex River Pass presented severe gradient challenges through the Cape fold mountains, solved by extensive earthworks, pass curves, and the 13.5 km tunnel system."
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "stamps": [
+    {
+      "stamp_id": "stamp-station-pretoria",
+      "waypoint_id": "station-pretoria",
+      "name": "Highveld Pioneer Stamp",
+      "tier": "Stoker"
+    },
+    {
+      "stamp_id": "stamp-station-kimberley",
+      "waypoint_id": "station-kimberley",
+      "name": "Diamond Field Miner Stamp",
+      "tier": "Track Master"
+    },
+    {
+      "stamp_id": "stamp-station-matjiesfontein",
+      "waypoint_id": "station-matjiesfontein",
+      "name": "Karoo Outpost Oasis Stamp",
+      "tier": "Karoo Scout"
+    },
+    {
+      "stamp_id": "stamp-station-cape-town",
+      "waypoint_id": "station-cape-town",
+      "name": "Cape Coastal Legend Stamp",
+      "tier": "Rail Legend"
+    }
+  ]
+}
