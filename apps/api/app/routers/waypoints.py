@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, status
 
+from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
 from app.schemas.trivia import TriviaQuestion
 from app.schemas.waypoint import Waypoint
-from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
 
 router = APIRouter(prefix="/waypoints", tags=["Waypoints & Trivia"])
 
