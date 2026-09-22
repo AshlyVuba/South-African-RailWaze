@@ -19,3 +19,8 @@
 - **Context:** Issue #5: Responsive layout pass and contract alignment for Unified Viewport.
 - **Decision:** Split Memory Vault overlay into a mobile bottom-sheet drawer (`<768px`, `max-h-[70vh]`, `pb-safe`) and a docked side card (`>=768px`, `w-[420px]`). Enforced root viewport horizontal containment (`overflow-x-hidden`, `max-w-[100vw]`).
 - **Contract Compatibility:** Aligned `WaypointProperties` to consume canonical `id` per `contracts/waypoint.schema.json` with fallback support for `stationId` (`activeStation.id ?? activeStation.stationId`) during migration.
+## 2026-09-22: Audio Capsule Visualizer & Slot Coexistence Architecture
+- **Context:** Issue #4: Lightweight folklore audio player with Web Audio API waveform visualizer (Iter 2).
+- **Audio Architecture:** Implemented dynamic canvas visualizer via `AudioContext` analyser node with a static canvas progress-bar fallback for restricted or headless runtimes. Gated play button on `isAudioLoaded` metadata availability.
+- **Viewport Coexistence:** Exposed `className` override on `AudioCapsule` to allow docking inside `UnifiedViewport` top safe-area slot (`pt-safe`) or floating at `bottom-20 pb-safe`, preventing collisions with the Memory Vault bottom drawer.
+- **Contract Traceability:** Bound `audioCapsuleId` to match `audio_capsule_id` in `contracts/waypoint.schema.json`.
