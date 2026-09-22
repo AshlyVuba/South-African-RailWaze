@@ -24,3 +24,9 @@
 - **Audio Architecture:** Implemented dynamic canvas visualizer via `AudioContext` analyser node with a static canvas progress-bar fallback for restricted or headless runtimes. Gated play button on `isAudioLoaded` metadata availability.
 - **Viewport Coexistence:** Exposed `className` override on `AudioCapsule` to allow docking inside `UnifiedViewport` top safe-area slot (`pt-safe`) or floating at `bottom-20 pb-safe`, preventing collisions with the Memory Vault bottom drawer.
 - **Contract Traceability:** Bound `audioCapsuleId` to match `audio_capsule_id` in `contracts/waypoint.schema.json`.
+
+## 2026-09-22: Trans-Karoo Passport Contract Alignment & State Synchronization
+- **Context:** Issue: Trans-Karoo Passport modal and progression state synchronization (Iter 2).
+- **Contract Compatibility:** Strictly aligned `PassportState`, `PassportStamp`, and `TravelerRank` in `PassportModal.tsx` to `contracts/trivia-passport.schema.json` and endpoint `GET /passport/{sessionId}` per `contracts/api-openapi.yaml`. Flagged backend schema divergence (`apps/api/app/schemas/passport.py`) per Rule 8 (contract wins).
+- **Event-Driven Refresh:** Implemented event listener for `railwaze:trivia-answered` CustomEvent to refresh passport ledger without full page reload when trivia is completed on the MapLibre canvas.
+- **Testing Standard:** Standardized mock fetch harness using `globalThis.fetch` and `vi.fn()` for Vitest / JSDOM environment compatibility.
