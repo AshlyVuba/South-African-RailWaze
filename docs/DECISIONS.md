@@ -15,3 +15,7 @@
         - `station-matjiesfontein` (Lord Milner Victorian era): `placeholder` — needs licensing check (Logan Heritage Collection).
         - `station-cape-town` (Hex River Pass construction): `placeholder` — needs licensing check (CGR archival survey records).
     - **Notice**: All historical images are marked `needs licensing check` and served as local placeholders until formal public-domain clearance is completed.
+## 2026-09-22: Responsive Viewport Bifurcation & Waypoint Contract Alignment
+- **Context:** Issue #5: Responsive layout pass and contract alignment for Unified Viewport.
+- **Decision:** Split Memory Vault overlay into a mobile bottom-sheet drawer (`<768px`, `max-h-[70vh]`, `pb-safe`) and a docked side card (`>=768px`, `w-[420px]`). Enforced root viewport horizontal containment (`overflow-x-hidden`, `max-w-[100vw]`).
+- **Contract Compatibility:** Aligned `WaypointProperties` to consume canonical `id` per `contracts/waypoint.schema.json` with fallback support for `stationId` (`activeStation.id ?? activeStation.stationId`) during migration.
