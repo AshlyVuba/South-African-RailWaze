@@ -30,3 +30,9 @@
 - **Contract Compatibility:** Strictly aligned `PassportState`, `PassportStamp`, and `TravelerRank` in `PassportModal.tsx` to `contracts/trivia-passport.schema.json` and endpoint `GET /passport/{sessionId}` per `contracts/api-openapi.yaml`. Flagged backend schema divergence (`apps/api/app/schemas/passport.py`) per Rule 8 (contract wins).
 - **Event-Driven Refresh:** Implemented event listener for `railwaze:trivia-answered` CustomEvent to refresh passport ledger without full page reload when trivia is completed on the MapLibre canvas.
 - **Testing Standard:** Standardized mock fetch harness using `globalThis.fetch` and `vi.fn()` for Vitest / JSDOM environment compatibility.
+
+## 2026-09-23: Issue #2 Responsive Verification & Guardrail Closure
+- **Context:** Issue #2: MapLibre GL JS 3D terrain canvas and viewport responsiveness.
+- **Verification:** Confirmed responsive viewport behavior at 375px, 414px, and 768px in `UnifiedViewport` layout tests and validated the live code through lint and the targeted Vitest suite.
+- **Evidence:** `npm test -- --run src/components/__tests__/UnifiedViewport.test.tsx` produced `1 passed file` with `9 passed tests`. `npm run lint` completed successfully with exit code 0.
+- **Decision:** The Issue #2 guardrail requirement is considered satisfied for the current implementation path: React lifecycle MapLibre initialization, terrain + dark styling, dynamic GeoJSON loading, and responsive viewport behavior are all in place and verified by the project test suite.
