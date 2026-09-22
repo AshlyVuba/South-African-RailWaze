@@ -1,6 +1,5 @@
-from fastapi.testclient import TestClient
-
 from app.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
@@ -26,7 +25,9 @@ def test_get_valid_waypoint_by_id():
 def test_get_invalid_waypoint_returns_404():
     response = client.get("/waypoints/WP_NON_EXISTENT")
     assert response.status_code == 404
-    assert "not found" in response.json()["detail"].lower()
+    data = response.json()
+    assert "error" in data
+    assert "not found" in data["error"]["message"].lower()
 
 
 def test_get_waypoint_trivia_returns_validated_questions():

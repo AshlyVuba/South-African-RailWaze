@@ -1,41 +1,32 @@
-from fastapi import APIRouter, HTTPException, status
-
 from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
 from app.schemas.trivia import TriviaQuestion
 from app.schemas.waypoint import Waypoint
+from fastapi import APIRouter, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
-router = APIRouter(prefix="/waypoints", tags=["Waypoints & Trivia"])
+limiter = Limiter(key_func=get_remote_address)
+router = APIRouter(prefix="/waypoints", tags=["Waypoints"])
 
 
-@router.get("", response_model=list[Waypoint], summary="Get all anchor waypoints")
-async def get_waypoints() -> list[Waypoint]:
-    """Retrieve all seeded anchor station waypoints along the Pretoria-to-Cape Town corridor."""
+@router.get("", response_model=list[Waypoint])
+def get_waypoints():
     return SEED_WAYPOINTS
 
 
-@router.get(
-    "/{waypoint_id}",
-    response_model=Waypoint,
-    summary="Get waypoint by ID",
-)
-async def get_waypoint_by_id(waypoint_id: str) -> Waypoint:
-    """Retrieve a single waypoint by its unique ID."""
-    for waypoint in SEED_WAYPOINTS:
-        if waypoint.id == waypoint_id:
-            return waypoint
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Waypoint with ID '{waypoint_id}' not found.",
-    )
+@router.get("/{waypoint_id}", response_model=Waypoint)
+def get_waypoint_by_id(waypoint_id: str):
+    waypoint = next((wp for wp in SEED_WAYPOINTS if wp.id == waypoint_id), None)
+    if not waypoint:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Waypoint with ID '{waypoint_id}' not found.",
+        )
+    return waypoint
 
 
-@router.get(
-    "/{waypoint_id}/trivia",
-    response_model=list[TriviaQuestion],
-    summary="Get trivia questions for a waypoint",
-)
-async def get_waypoint_trivia(waypoint_id: str) -> list[TriviaQuestion]:
-    """Retrieve all trivia questions linked to a specific waypoint ID."""
-    # Verify waypoint exists first
-    await get_waypoint_by_id(waypoint_id)
-    return SEED_TRIVIA.get(waypoint_id, [])
+@router.get("/{waypoint_id}/trivia", response_model=list[TriviaQuestion])
+@limiter.limit("30/minute")
+def get_waypoint_trivia(request: Request, waypoint_id: str):
+    get_waypoint_by_id(waypoint_id)
+    return [t for t in SEED_TRIVIA if t.waypoint_id == waypoint_id]

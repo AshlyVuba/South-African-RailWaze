@@ -1,4 +1,4 @@
-from app.middleware.error_handler import (  # pyright: ignore[reportMissingImports]
+from app.middleware.error_handler import (
     generic_exception_handler,
     http_exception_handler,
     validation_exception_handler,
