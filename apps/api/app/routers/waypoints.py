@@ -1,9 +1,10 @@
-from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
-from app.schemas.trivia import TriviaQuestion
-from app.schemas.waypoint import Waypoint
 from fastapi import APIRouter, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+
+from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
+from app.schemas.trivia import TriviaQuestion
+from app.schemas.waypoint import Waypoint
 
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/waypoints", tags=["Waypoints"])
@@ -29,4 +30,4 @@ def get_waypoint_by_id(waypoint_id: str):
 @limiter.limit("30/minute")
 def get_waypoint_trivia(request: Request, waypoint_id: str):
     get_waypoint_by_id(waypoint_id)
-    return [t for t in SEED_TRIVIA if t.waypoint_id == waypoint_id]
+    return SEED_TRIVIA.get(waypoint_id, [])
