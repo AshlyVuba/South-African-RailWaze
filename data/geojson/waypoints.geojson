@@ -13,8 +13,10 @@
         "name": "Pretoria",
         "lat": -25.7565,
         "lng": 28.1895,
+        "km_mark": 0,
         "elevation_m": 1339,
         "biome": "Highveld",
+        "memory_vault": "vault-station-pretoria",
         "audio_capsule_id": "audio-station-pretoria",
         "memory_vault_id": "vault-station-pretoria",
         "passport_stamp_id": "stamp-station-pretoria"
@@ -32,8 +34,10 @@
         "name": "Kimberley",
         "lat": -28.7383,
         "lng": 24.7645,
+        "km_mark": 520,
         "elevation_m": 1210,
         "biome": "Diamond Fields",
+        "memory_vault": "vault-station-kimberley",
         "audio_capsule_id": "audio-station-kimberley",
         "memory_vault_id": "vault-station-kimberley",
         "passport_stamp_id": "stamp-station-kimberley"
@@ -51,8 +55,10 @@
         "name": "Matjiesfontein",
         "lat": -33.2307,
         "lng": 20.5828,
+        "km_mark": 1120,
         "elevation_m": 890,
         "biome": "Great Karoo",
+        "memory_vault": "vault-station-matjiesfontein",
         "audio_capsule_id": "audio-station-matjiesfontein",
         "memory_vault_id": "vault-station-matjiesfontein",
         "passport_stamp_id": "stamp-station-matjiesfontein"
@@ -70,8 +76,10 @@
         "name": "Hex River / Cape Town",
         "lat": -33.9249,
         "lng": 18.4241,
+        "km_mark": 1600,
         "elevation_m": 15,
         "biome": "Cape Fynbos",
+        "memory_vault": "vault-station-cape-town",
         "audio_capsule_id": "audio-station-cape-town",
         "memory_vault_id": "vault-station-cape-town",
         "passport_stamp_id": "stamp-station-cape-town"
