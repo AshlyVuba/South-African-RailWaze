@@ -17,5 +17,21 @@ export default tseslint.config(
                 },
             ],
         },
+    },
+    {
+        // public/sw.js runs in the ServiceWorker global scope, not the
+        // regular browser/DOM scope the rest of this config assumes -
+        // self, caches, fetch, etc. are real globals there, not undefined.
+        files: ['public/sw.js'],
+        languageOptions: {
+            globals: {
+                self: 'readonly',
+                caches: 'readonly',
+                fetch: 'readonly',
+                Request: 'readonly',
+                Response: 'readonly',
+                URL: 'readonly',
+            },
+        },
     }
 );

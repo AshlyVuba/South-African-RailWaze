@@ -28,7 +28,7 @@ type GeoJsonFeatureCollection<TGeometry> = {
   features: Array<{
     type: 'Feature';
     id?: string | number;
-    properties?: Record<string, unknown>;
+    properties: Record<string, unknown> | null;
     geometry: TGeometry;
   }>;
 };
@@ -62,16 +62,16 @@ const emptyWaypointsGeoJson: GeoJsonFeatureCollection<GeoJsonPointGeometry> = {
  * Issue 4: train scrub position, heading, and waypoint reach triggers.
  */
 export const MapCanvas: React.FC<MapCanvasProps> = ({
-  className = '',
-  style,
-  children,
-  onSelectWaypoint,
-  routeGeoJson = emptyRouteGeoJson,
-  waypointsGeoJson = emptyWaypointsGeoJson,
-  progressPercent = 0,
-  onWaypointReached,
-  proximityThresholdKm = 12.0,
-}) => {
+                                                      className = '',
+                                                      style,
+                                                      children,
+                                                      onSelectWaypoint,
+                                                      routeGeoJson = emptyRouteGeoJson,
+                                                      waypointsGeoJson = emptyWaypointsGeoJson,
+                                                      progressPercent = 0,
+                                                      onWaypointReached,
+                                                      proximityThresholdKm = 12.0,
+                                                    }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const trainMarkerRef = useRef<Marker | null>(null);
@@ -221,70 +221,70 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   }, [initialCenter, routeGeoJson, waypointsGeoJson]);
 
   const updatePosition = useCallback(
-    (pct: number) => {
-      const map = mapRef.current;
-      if (!map || !lineFeature || totalLengthKm.current === 0) {
-        return;
-      }
+      (pct: number) => {
+        const map = mapRef.current;
+        if (!map || !lineFeature || totalLengthKm.current === 0) {
+          return;
+        }
 
-      const clamped = Math.max(0, Math.min(100, pct)) / 100;
-      const targetDistKm = clamped * totalLengthKm.current;
-      const currentPt = along(lineFeature, targetDistKm, { units: 'kilometers' });
-      const [lng, lat] = currentPt.geometry.coordinates as [number, number];
+        const clamped = Math.max(0, Math.min(100, pct)) / 100;
+        const targetDistKm = clamped * totalLengthKm.current;
+        const currentPt = along(lineFeature, targetDistKm, { units: 'kilometers' });
+        const [lng, lat] = currentPt.geometry.coordinates as [number, number];
 
-      const lookaheadKm = Math.min(targetDistKm + 0.5, totalLengthKm.current);
-      const aheadPt = along(lineFeature, lookaheadKm, { units: 'kilometers' });
-      const currentBearing = bearing(currentPt, aheadPt);
+        const lookaheadKm = Math.min(targetDistKm + 0.5, totalLengthKm.current);
+        const aheadPt = along(lineFeature, lookaheadKm, { units: 'kilometers' });
+        const currentBearing = bearing(currentPt, aheadPt);
 
-      if (!trainMarkerRef.current) {
-        const markerEl = document.createElement('div');
-        markerEl.className = 'train-marker';
-        markerEl.style.width = '28px';
-        markerEl.style.height = '28px';
-        markerEl.style.display = 'flex';
-        markerEl.style.alignItems = 'center';
-        markerEl.style.justifyContent = 'center';
-        markerEl.innerHTML = `
+        if (!trainMarkerRef.current) {
+          const markerEl = document.createElement('div');
+          markerEl.className = 'train-marker';
+          markerEl.style.width = '28px';
+          markerEl.style.height = '28px';
+          markerEl.style.display = 'flex';
+          markerEl.style.alignItems = 'center';
+          markerEl.style.justifyContent = 'center';
+          markerEl.innerHTML = `
           <svg viewBox="0 0 24 24" width="24" height="24" fill="#F59E0B" stroke="#060B19" stroke-width="1.5">
             <path d="M4 15.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h12v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V5c0-3.5-3.58-4-8-4s-8 .5-8 4v10.5zm8-12.5c3.71 0 5.8 0.42 6 2H6c.2-1.58 2.29-2 6-2zm-5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm10 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-7 6c-.55 0-1-.45-1-1s.45-1 1-1h4c.55 0 1 .45 1 1s-.45 1-1 1h-4z"/>
           </svg>
         `;
 
-        trainMarkerRef.current = new Marker({ element: markerEl })
-          .setLngLat([lng, lat])
-          .setRotation(currentBearing)
-          .addTo(map);
-      } else {
-        trainMarkerRef.current.setLngLat([lng, lat]);
-        trainMarkerRef.current.setRotation(currentBearing);
-      }
+          trainMarkerRef.current = new Marker({ element: markerEl })
+              .setLngLat([lng, lat])
+              .setRotation(currentBearing)
+              .addTo(map);
+        } else {
+          trainMarkerRef.current.setLngLat([lng, lat]);
+          trainMarkerRef.current.setRotation(currentBearing);
+        }
 
-      map.easeTo({ center: [lng, lat], duration: 0, pitch: 60 });
+        map.easeTo({ center: [lng, lat], duration: 0, pitch: 60 });
 
-      if (onWaypointReached && waypointsGeoJson.features.length > 0) {
-        const currentTurfPt = point([lng, lat]);
-        let activeWp: string | null = null;
+        if (onWaypointReached && waypointsGeoJson.features.length > 0) {
+          const currentTurfPt = point([lng, lat]);
+          let activeWp: string | null = null;
 
-        for (const wp of waypointsGeoJson.features) {
-          const geometry = wp.geometry;
-          const waypointCoords = geometry.coordinates;
-          const d = distance(currentTurfPt, waypointCoords, { units: 'kilometers' });
+          for (const wp of waypointsGeoJson.features) {
+            const geometry = wp.geometry;
+            const waypointCoords = geometry.coordinates;
+            const d = distance(currentTurfPt, waypointCoords, { units: 'kilometers' });
 
-          if (d <= proximityThresholdKm) {
-            activeWp = String((wp.properties?.id as string | undefined) ?? wp.id ?? '');
-            break;
+            if (d <= proximityThresholdKm) {
+              activeWp = String((wp.properties?.id as string | undefined) ?? wp.id ?? '');
+              break;
+            }
+          }
+
+          if (activeWp && activeWp !== lastTriggeredWpRef.current) {
+            lastTriggeredWpRef.current = activeWp;
+            onWaypointReached(activeWp);
+          } else if (!activeWp) {
+            lastTriggeredWpRef.current = null;
           }
         }
-
-        if (activeWp && activeWp !== lastTriggeredWpRef.current) {
-          lastTriggeredWpRef.current = activeWp;
-          onWaypointReached(activeWp);
-        } else if (!activeWp) {
-          lastTriggeredWpRef.current = null;
-        }
-      }
-    },
-    [lineFeature, onWaypointReached, proximityThresholdKm, waypointsGeoJson],
+      },
+      [lineFeature, onWaypointReached, proximityThresholdKm, waypointsGeoJson],
   );
 
   useEffect(() => {
@@ -292,129 +292,129 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   }, [progressPercent, updatePosition]);
 
   return (
-    <div
-      className={`map-canvas-container ${className}`}
-      data-testid="map-canvas"
-      style={{
-        position: 'relative',
-        width: '100%',
-        minHeight: '320px',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#121826',
-        color: '#f3f4f6',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-        touchAction: 'none',
-        ...style,
-      }}
-    >
       <div
-        ref={containerRef}
-        style={{
-          width: '100%',
-          height: '100%',
-          minHeight: '300px',
-          position: 'relative',
-          touchAction: 'none',
-        }}
-      />
-
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '16px',
-          textAlign: 'center',
-          maxWidth: '90%',
-        }}
+          className={`map-canvas-container ${className}`}
+          data-testid="map-canvas"
+          style={{
+            position: 'relative',
+            width: '100%',
+            minHeight: '320px',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#121826',
+            color: '#f3f4f6',
+            overflow: 'hidden',
+            boxSizing: 'border-box',
+            touchAction: 'none',
+            ...style,
+          }}
       >
         <div
-          style={{
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            letterSpacing: '0.025em',
-          }}
-        >
-          {/* PLACEHOLDER_TERRAIN_VIEWPORT */}
-          RailWaze Map Viewport
-        </div>
-        <p
-          style={{
-            fontSize: '0.875rem',
-            color: '#9ca3af',
-            margin: 0,
-          }}
-        >
-          {/* // TODO: verify MapLibre GL 3D terrain and route.geojson layer integration */}
-          Pretoria &rarr; Cape Town Corridor (MapLibre 3D Terrain)
-        </p>
+            ref={containerRef}
+            style={{
+              width: '100%',
+              height: '100%',
+              minHeight: '300px',
+              position: 'relative',
+              touchAction: 'none',
+            }}
+        />
 
-        {onSelectWaypoint && (
-          <div
+        <div
             style={{
               display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
               gap: '8px',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              marginTop: '12px',
+              padding: '16px',
+              textAlign: 'center',
+              maxWidth: '90%',
             }}
+        >
+          <div
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                letterSpacing: '0.025em',
+              }}
           >
-            <button
-              type="button"
-              onClick={() =>
-                onSelectWaypoint({
-                  stationId: 'pretoria',
-                  name: 'Pretoria Station',
-                })
-              }
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
-                fontSize: '0.8125rem',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              {/* PLACEHOLDER_TEST_WAYPOINT_PRETORIA */}
-              Select Pretoria Station
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                onSelectWaypoint({
-                  stationId: 'kimberley',
-                  name: 'Kimberley Station',
-                })
-              }
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                backgroundColor: '#374151',
-                color: '#ffffff',
-                fontSize: '0.8125rem',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              {/* PLACEHOLDER_TEST_WAYPOINT_KIMBERLEY */}
-              Select Kimberley Station
-            </button>
+            {/* PLACEHOLDER_TERRAIN_VIEWPORT */}
+            RailWaze Map Viewport
           </div>
-        )}
-      </div>
+          <p
+              style={{
+                fontSize: '0.875rem',
+                color: '#9ca3af',
+                margin: 0,
+              }}
+          >
+            {/* // TODO: verify MapLibre GL 3D terrain and route.geojson layer integration */}
+            Pretoria &rarr; Cape Town Corridor (MapLibre 3D Terrain)
+          </p>
 
-      {children}
-    </div>
+          {onSelectWaypoint && (
+              <div
+                  style={{
+                    display: 'flex',
+                    gap: '8px',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    marginTop: '12px',
+                  }}
+              >
+                <button
+                    type="button"
+                    onClick={() =>
+                        onSelectWaypoint({
+                          stationId: 'pretoria',
+                          name: 'Pretoria Station',
+                        })
+                    }
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      fontSize: '0.8125rem',
+                      fontWeight: 500,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                >
+                  {/* PLACEHOLDER_TEST_WAYPOINT_PRETORIA */}
+                  Select Pretoria Station
+                </button>
+                <button
+                    type="button"
+                    onClick={() =>
+                        onSelectWaypoint({
+                          stationId: 'kimberley',
+                          name: 'Kimberley Station',
+                        })
+                    }
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      backgroundColor: '#374151',
+                      color: '#ffffff',
+                      fontSize: '0.8125rem',
+                      fontWeight: 500,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                >
+                  {/* PLACEHOLDER_TEST_WAYPOINT_KIMBERLEY */}
+                  Select Kimberley Station
+                </button>
+              </div>
+          )}
+        </div>
+
+        {children}
+      </div>
   );
 };
 

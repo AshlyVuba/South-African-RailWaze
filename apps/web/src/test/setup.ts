@@ -3,11 +3,8 @@ import { vi } from 'vitest';
 
 vi.mock('maplibre-gl', () => {
   class MockMap {
-    constructor(public options: unknown) {
-      this.options = options;
-    }
+    constructor(public options: unknown) {}
 
-    public options: unknown;
     public on = vi.fn();
     public addSource = vi.fn();
     public addLayer = vi.fn();
