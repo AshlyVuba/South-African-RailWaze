@@ -5,29 +5,33 @@ import { UnifiedViewport } from '../UnifiedViewport';
 // Mock child components to isolate layout & DOM behavior without WebGL errors
 vi.mock('../MapCanvas', () => ({
   MapCanvas: ({
-    onSelectWaypoint,
-  }: {
+                onSelectWaypoint,
+              }: {
     onSelectWaypoint: (st: { id?: string; stationId?: string; name: string; [key: string]: unknown }) => void;
   }) => (
-    <div data-testid="map-canvas">
-      <button
-        onClick={() => onSelectWaypoint({ stationId: 'pretoria', name: 'Pretoria Station' })}
-      >
-        Select Pretoria Station
-      </button>
-      <button
-        onClick={() => onSelectWaypoint({ stationId: 'kimberley', name: 'Kimberley Station' })}
-      >
-        Select Kimberley Station
-      </button>
-    </div>
+      <div data-testid="map-canvas">
+        <button
+            onClick={() => onSelectWaypoint({ stationId: 'pretoria', name: 'Pretoria Station' })}
+        >
+          Select Pretoria Station
+        </button>
+        <button
+            onClick={() => onSelectWaypoint({ stationId: 'kimberley', name: 'Kimberley Station' })}
+        >
+          Select Kimberley Station
+        </button>
+      </div>
   ),
 }));
 
 vi.mock('../MemoryVaultSlider', () => ({
   MemoryVaultSlider: ({ stationId }: { stationId: string }) => (
-    <div data-testid="mock-memory-slider">Station ID: {stationId}</div>
+      <div data-testid="mock-memory-slider">Station ID: {stationId}</div>
   ),
+}));
+
+vi.mock('../ConnectivityBanner', () => ({
+  ConnectivityBanner: () => <div data-testid="mock-connectivity-banner" />,
 }));
 
 describe('UnifiedViewport Integration & Responsive DoD Tests', () => {
@@ -93,6 +97,11 @@ describe('UnifiedViewport Integration & Responsive DoD Tests', () => {
     render(<UnifiedViewport />);
     expect(screen.getByTestId('map-canvas')).toBeInTheDocument();
     expect(screen.queryByLabelText('Station Memory Vault')).not.toBeInTheDocument();
+  });
+
+  it('mounts the connectivity status indicator', () => {
+    render(<UnifiedViewport />);
+    expect(screen.getByTestId('mock-connectivity-banner')).toBeInTheDocument();
   });
 
   it('tapping Pretoria waypoint opens Pretoria card (not any other station)', () => {
