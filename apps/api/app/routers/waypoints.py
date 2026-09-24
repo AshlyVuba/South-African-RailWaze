@@ -1,12 +1,10 @@
 from fastapi import APIRouter, HTTPException, Request, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
+from app.rate_limit import limiter
 from app.schemas.trivia import TriviaQuestion
 from app.schemas.waypoint import Waypoint
 
-limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/waypoints", tags=["Waypoints"])
 
 
