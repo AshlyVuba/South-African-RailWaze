@@ -31,6 +31,18 @@ export default tseslint.config(
                 Request: 'readonly',
                 Response: 'readonly',
                 URL: 'readonly',
+                crypto: 'readonly',
+            },
+        },
+    },
+    {
+        // Build-time Node scripts (e.g. the integrity manifest generator) -
+        // console/process are real Node globals here, not undefined.
+        files: ['scripts/**/*.mjs', 'scripts/**/*.js'],
+        languageOptions: {
+            globals: {
+                console: 'readonly',
+                process: 'readonly',
             },
         },
     }

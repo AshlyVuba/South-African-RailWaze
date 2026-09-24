@@ -1,6 +1,6 @@
 // apps/web/public/sw.js
 //
-// Iteration 3 Issue #6: offline-first pre-caching layer.
+// Iteration 3: offline-first pre-caching layer.
 //
 // Plain JS, not TypeScript: this file is served as-is from apps/web/public/
 // by Vite (nothing in public/ is transpiled), so it can't import the
@@ -24,7 +24,79 @@ const APP_SHELL_ASSETS = [
     '/data/route.geojson',
     '/data/waypoints.geojson',
     '/data/memory-vault.json',
+    '/integrity-manifest.json',
 ];
+
+// --- SHA-256 integrity (Iteration 3)) -----------------------------
+// Mirrors apps/web/src/lib/integrity.ts (the tested, canonical version -
+// see the file-level comment above about why this file can't import it
+// directly) and apps/web/scripts/generate-integrity-manifest.mjs, which
+// generates /integrity-manifest.json at dev/build time. Keep this list in
+// sync with that script's ASSET_PATHS.
+const STATIC_INTEGRITY_ASSETS = [
+    '/manifest.json',
+    '/icons/icon.svg',
+    '/data/route.geojson',
+    '/data/waypoints.geojson',
+    '/data/memory-vault.json',
+];
+
+async function sha256Hex(arrayBuffer) {
+    const digest = await crypto.subtle.digest('SHA-256', arrayBuffer);
+    return Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
+}
+
+async function getIntegrityManifest() {
+    const cached = await caches.match('/integrity-manifest.json');
+    if (!cached) return {};
+    try {
+        return await cached.clone().json();
+    } catch {
+        return {};
+    }
+}
+
+/**
+ * Verifies a cached response's actual bytes against the build-time SHA-256
+ * manifest before it's ever returned to the page. A tampered or corrupted
+ * cache entry must never be silently served as if it were the real asset.
+ */
+async function verifyCachedResponse(pathname, cachedResponse) {
+    if (!STATIC_INTEGRITY_ASSETS.includes(pathname)) {
+        // Not a tracked asset (e.g. index.html, which Vite transforms
+        // differently in dev vs build, or a runtime-cached map tile) -
+        // nothing to verify against.
+        return { ok: true, tracked: false };
+    }
+
+    const manifest = await getIntegrityManifest();
+    const expectedHash = manifest[pathname];
+    if (!expectedHash) {
+        // Manifest not cached yet, or this path was added to
+        // STATIC_INTEGRITY_ASSETS without regenerating the manifest.
+        return { ok: true, tracked: false };
+    }
+
+    const buffer = await cachedResponse.clone().arrayBuffer();
+    const actualHash = await sha256Hex(buffer);
+    return { ok: actualHash === expectedHash, tracked: true, expectedHash, actualHash };
+}
+
+function contentUnavailableResponse(pathname) {
+    return new Response(
+        JSON.stringify({
+            error: 'CONTENT_INTEGRITY_MISMATCH',
+            message: `Cached content for ${pathname} failed integrity verification and could not be safely served.`,
+        }),
+        {
+            status: 409,
+            statusText: 'Content Integrity Mismatch',
+            headers: { 'Content-Type': 'application/json' },
+        }
+    );
+}
 
 // --- Station media (Memory Vault images, Audio Capsule clips): -----------
 // These don't exist as real files yet - MemoryVaultSlider currently renders
@@ -176,11 +248,36 @@ self.addEventListener('fetch', (event) => {
 
     // Everything else (app shell, manifest, geojson, station media once it
     // exists): cache-first, since these only change on a new deploy, not
-    // request-to-request.
+    // request-to-request. Tracked assets are SHA-256 verified before being
+    // served - a corrupted or tampered cache entry never goes straight to
+    // the page.
     event.respondWith(
         (async () => {
             const cached = await caches.match(request);
-            if (cached) return cached;
+
+            if (cached) {
+                const verification = await verifyCachedResponse(url.pathname, cached);
+                if (verification.ok) {
+                    return cached;
+                }
+
+                // Cached copy failed verification - never serve it as-is.
+                // Try a fresh network fetch instead of assuming the worst.
+                try {
+                    const fresh = await fetch(request);
+                    if (fresh.ok && request.method === 'GET') {
+                        const cache = await caches.open(STATIC_CACHE);
+                        cache.put(request, fresh.clone());
+                    }
+                    return fresh;
+                } catch {
+                    // No network either - we genuinely cannot safely serve
+                    // this asset. Say so clearly rather than returning the
+                    // corrupted bytes.
+                    return contentUnavailableResponse(url.pathname);
+                }
+            }
+
             try {
                 const response = await fetch(request);
                 if (response.ok && request.method === 'GET') {
