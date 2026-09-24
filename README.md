@@ -1,6 +1,6 @@
 # South African RailWaze
 
-**Team:** TheLastCodeBenders (WeThinkCode_)
+**Team:** TheLastCodeBenders
 **Event:** Geekulcha Annual Hackathon 2026 (25–27 September 2026, Centurion, #GKHack26)
 **Challenge track:** Train Journey Mapper
 **Corridor:** Pretoria → Cape Town (1,600 km)
