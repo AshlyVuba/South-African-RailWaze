@@ -60,7 +60,10 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     isDragging.current = true;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    const target = e.currentTarget as HTMLDivElement;
+    if (typeof target.setPointerCapture === 'function') {
+      target.setPointerCapture(e.pointerId);
+    }
     calculatePosition(e.clientX);
   };
 
@@ -71,8 +74,11 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     isDragging.current = false;
+    const target = e.currentTarget as HTMLDivElement;
     try {
-      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      if (typeof target.releasePointerCapture === 'function') {
+        target.releasePointerCapture(e.pointerId);
+      }
     } catch {
       // Graceful fallback for non-captured targets.
     }
