@@ -12,19 +12,19 @@ from app.schemas.waypoint import (
 
 
 def _valid_properties_kwargs():
-    return dict(
-        id="station-pretoria",
-        name="Pretoria",
-        lat=-25.7565,
-        lng=28.1895,
-        km_mark=0,
-        elevation_m=1339,
-        biome="Highveld",
-        memory_vault="vault-station-pretoria",
-        audio_capsule_id="audio-station-pretoria",
-        memory_vault_id="vault-station-pretoria",
-        passport_stamp_id="stamp-station-pretoria",
-    )
+    return {
+        "id": "station-pretoria",
+        "name": "Pretoria",
+        "lat": -25.7565,
+        "lng": 28.1895,
+        "km_mark": 0,
+        "elevation_m": 1339,
+        "biome": "Highveld",
+        "memory_vault": "vault-station-pretoria",
+        "audio_capsule_id": "audio-station-pretoria",
+        "memory_vault_id": "vault-station-pretoria",
+        "passport_stamp_id": "stamp-station-pretoria",
+    }
 
 
 def _valid_feature():
@@ -74,14 +74,14 @@ def test_waypoint_feature_collection_rejects_unexpected_extra_field():
 
 
 def _valid_trivia_kwargs():
-    return dict(
-        id="trivia-pretoria-nzasm",
-        waypoint_id="station-pretoria",
-        question="Which railway company built this line?",
-        options=["A", "B", "C", "D"],
-        answer_index=1,
-        explanation="Because history.",
-    )
+    return {
+        "id": "trivia-pretoria-nzasm",
+        "waypoint_id": "station-pretoria",
+        "question": "Which railway company built this line?",
+        "options": ["A", "B", "C", "D"],
+        "answer_index": 1,
+        "explanation": "Because history.",
+    }
 
 
 def test_trivia_question_rejects_unexpected_extra_field():
