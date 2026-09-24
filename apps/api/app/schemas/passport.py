@@ -1,23 +1,30 @@
 from datetime import datetime
+from enum import Enum
+from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class Stamp(BaseModel):
-    waypoint_id: str = Field(..., description="Waypoint ID associated with stamp")
-    unlocked_at: datetime = Field(..., description="Timestamp when stamp was awarded")
+class TravelerRank(str, Enum):
+    STOKER = "Stoker"
+    TRACK_MASTER = "Track Master"
+    KAROO_SCOUT = "Karoo Scout"
+    RAIL_LEGEND = "Rail Legend"
+
+
+class PassportStamp(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    stamp_id: str
+    waypoint_id: str
+    collected_at: datetime
 
 
 class PassportState(BaseModel):
-    user_id: str = Field(..., description="Unique user identifier")
-    rank: str = Field(
-        default="Stoker",
-        description="Traveler progression rank e.g. Stoker, Rail Legend",
-    )
-    total_points: int = Field(default=0, ge=0, description="Cumulative trivia points")
-    stamps: list[Stamp] = Field(
-        default_factory=list, description="Unlocked digital passport stamps"
-    )
+    model_config = ConfigDict(extra="forbid")
 
-    class Config:
-        extra = "forbid"
+    session_id: UUID
+    current_rank: TravelerRank
+    score: int = Field(..., ge=0)
+    collected_stamps: list[PassportStamp] = Field(default_factory=list)
+    completed_trivia_ids: list[str] = Field(default_factory=list)

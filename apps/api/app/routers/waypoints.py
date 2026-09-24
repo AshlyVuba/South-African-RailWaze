@@ -3,19 +3,21 @@ from fastapi import APIRouter, HTTPException, Request, status
 from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
 from app.rate_limit import limiter
 from app.schemas.trivia import TriviaQuestion
-from app.schemas.waypoint import Waypoint
+from app.schemas.waypoint import WaypointFeature, WaypointFeatureCollection
 
 router = APIRouter(prefix="/waypoints", tags=["Waypoints"])
 
 
-@router.get("", response_model=list[Waypoint])
+@router.get("", response_model=WaypointFeatureCollection)
 def get_waypoints():
     return SEED_WAYPOINTS
 
 
-@router.get("/{waypoint_id}", response_model=Waypoint)
+@router.get("/{waypoint_id}", response_model=WaypointFeature)
 def get_waypoint_by_id(waypoint_id: str):
-    waypoint = next((wp for wp in SEED_WAYPOINTS if wp.id == waypoint_id), None)
+    waypoint = next(
+        (f for f in SEED_WAYPOINTS.features if f.id == waypoint_id), None
+    )
     if not waypoint:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

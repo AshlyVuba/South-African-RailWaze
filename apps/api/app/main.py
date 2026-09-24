@@ -12,7 +12,7 @@ from app.middleware.error_handler import (
     validation_exception_handler,
 )
 from app.rate_limit import limiter
-from app.routers import waypoints
+from app.routers import trivia, waypoints
 
 app = FastAPI(
     title="RailWaze API",
@@ -43,6 +43,7 @@ app.add_middleware(
 app.add_middleware(SlowAPIMiddleware)
 
 app.include_router(waypoints.router)
+app.include_router(trivia.router)
 
 
 @app.get("/health")
