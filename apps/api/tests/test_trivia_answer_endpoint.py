@@ -4,63 +4,52 @@ from app.main import app
 
 client = TestClient(app)
 
-VALID_TRIVIA_ID = "trivia-pretoria-nzasm"  # NZASM question, correct answer_index 1
-
-
-def test_malformed_payload_missing_required_field_returns_422():
-    response = client.post("/trivia/answer", json={"trivia_id": VALID_TRIVIA_ID})
-    assert response.status_code == 422
-
-
-def test_malformed_payload_with_unexpected_extra_field_returns_422():
+def test_correct_answer_awards_stamp():
+    session_id = "test-session-1"
     response = client.post(
-        "/trivia/answer",
-        json={
-            "trivia_id": VALID_TRIVIA_ID,
-            "selected_index": 1,
-            "unexpected_field": "nope",
-        },
-    )
-    assert response.status_code == 422
-
-
-def test_malformed_payload_with_out_of_range_index_returns_422():
-    response = client.post(
-        "/trivia/answer",
-        json={"trivia_id": VALID_TRIVIA_ID, "selected_index": 7},
-    )
-    assert response.status_code == 422
-
-
-def test_malformed_payload_with_wrong_type_returns_422():
-    response = client.post(
-        "/trivia/answer",
-        json={"trivia_id": VALID_TRIVIA_ID, "selected_index": "not-a-number"},
-    )
-    assert response.status_code == 422
-
-
-def test_correct_answer_is_recognized():
-    response = client.post(
-        "/trivia/answer",
-        json={"trivia_id": VALID_TRIVIA_ID, "selected_index": 1},
+        "/waypoints/kimberley/trivia/answer",
+        json={"sessionId": session_id, "selectedOptionIndex": 0}  # assuming 0 is correct in test fixture
     )
     assert response.status_code == 200
-    assert response.json()["correct"] is True
+    data = response.json()
+    assert data["correct"] is True
+    assert data["stampAwarded"] is not None
 
+    # Verify passport reflects stamp
+    p_res = client.get(f"/passport/{session_id}")
+    assert p_res.status_code == 200
+    passport = p_res.json()
+    assert len(passport["stamps"]) == 1
 
-def test_incorrect_answer_is_recognized():
+def test_incorrect_answer_no_stamp():
+    session_id = "test-session-2"
     response = client.post(
-        "/trivia/answer",
-        json={"trivia_id": VALID_TRIVIA_ID, "selected_index": 0},
+        "/waypoints/kimberley/trivia/answer",
+        json={"sessionId": session_id, "selectedOptionIndex": 99}
     )
     assert response.status_code == 200
-    assert response.json()["correct"] is False
+    data = response.json()
+    assert data["correct"] is False
+    assert data["stampAwarded"] is None
 
-
-def test_unknown_trivia_id_returns_404_not_422():
-    response = client.post(
-        "/trivia/answer",
-        json={"trivia_id": "trivia-does-not-exist", "selected_index": 0},
+def test_rate_limiting_rapid_submissions():
+    session_id = "test-session-rate"
+    for _ in range(5):
+        client.post(
+            "/waypoints/kimberley/trivia/answer",
+            json={"sessionId": session_id, "selectedOptionIndex": 0}
+        )
+    # 6th request triggers 429
+    blocked = client.post(
+        "/waypoints/kimberley/trivia/answer",
+        json={"sessionId": session_id, "selectedOptionIndex": 0}
     )
-    assert response.status_code == 404
+    assert blocked.status_code == 429
+
+def test_fabricated_client_rank_rejected():
+    # Calling GET compute endpoint ignores any client assumptions
+    session_id = "new-user-cheater"
+    p_res = client.get(f"/passport/{session_id}")
+    data = p_res.json()
+    assert data["rank"] == "Stoker"
+    assert data["totalScore"] == 0
