@@ -3,6 +3,7 @@ import { AudioCapsule } from './AudioCapsule';
 import { MapCanvas } from './MapCanvas';
 import { MemoryVaultSlider } from './MemoryVaultSlider';
 import { ConnectivityBanner } from './ConnectivityBanner';
+import { PassportModal } from './PassportModal';
 
 interface WaypointProperties {
   id?: string;
@@ -21,6 +22,7 @@ interface ActiveAudioState {
 export const UnifiedViewport: React.FC = () => {
   const [activeStation, setActiveStation] = useState<WaypointProperties | null>(null);
   const [activeAudio, setActiveAudio] = useState<ActiveAudioState | null>(null);
+  const [isPassportOpen, setIsPassportOpen] = useState<boolean>(false);
   const lastAudioWaypointIdRef = useRef<string | null>(null);
 
   const handleWaypointSelect = useCallback((station: WaypointProperties) => {
@@ -79,9 +81,9 @@ export const UnifiedViewport: React.FC = () => {
         className="absolute top-0 inset-x-0 z-20 pointer-events-none pt-safe"
       >
         <div className="mx-auto max-w-md px-4 pt-2">
-          <div className="pointer-events-auto flex items-center justify-between rounded-full bg-slate-900/80 px-4 py-2 border border-slate-700/60 backdrop-blur shadow-lg text-xs text-slate-300">
-            <span className="font-semibold text-amber-400">RailWaze Live</span>
-            <span className="truncate max-w-[180px] text-slate-400">
+          <div className="pointer-events-auto flex items-center justify-between rounded-full bg-neutral-900/90 px-4 py-2 border border-white/10 backdrop-blur-md shadow-lg text-xs font-mono text-neutral-300">
+            <span className="font-semibold text-amber-500">RailWaze Live</span>
+            <span className="truncate max-w-[180px] text-neutral-400">
               {activeAudio ? activeAudio.title : 'PLACEHOLDER_AUDIO_TRACK'}
             </span>
           </div>
@@ -96,20 +98,20 @@ export const UnifiedViewport: React.FC = () => {
             absolute z-30 transition-all duration-300 ease-out flex flex-col
             inset-x-0 bottom-0 max-h-[70vh] rounded-t-2xl pb-safe
             md:inset-y-4 md:left-4 md:right-auto md:w-[420px] md:max-h-[calc(100dvh-2rem)] md:rounded-2xl
-            bg-slate-950/95 border border-slate-800 shadow-2xl backdrop-blur-md
+            bg-neutral-900/95 border border-white/10 shadow-2xl backdrop-blur-md
           "
         >
           <div className="flex justify-center pt-2 pb-1 md:hidden">
-            <div className="w-10 h-1 rounded-full bg-slate-700" />
+            <div className="w-10 h-1 rounded-full bg-neutral-700" />
           </div>
 
-          <div className="flex items-center justify-between p-4 border-b border-slate-800 shrink-0">
-            <h2 className="text-lg font-bold text-white tracking-wide">
+          <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
+            <h2 className="text-base font-semibold tracking-wide text-neutral-100">
               {activeStation.name} Vault
             </h2>
             <button
               onClick={handleCloseVault}
-              className="p-2 text-slate-400 hover:text-white rounded-lg active:bg-slate-800 focus:outline-none"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors shrink-0"
               aria-label="Close card"
             >
               ✕
@@ -141,12 +143,19 @@ export const UnifiedViewport: React.FC = () => {
         <div className="flex justify-end p-4">
           <button
             type="button"
-            className="pointer-events-auto rounded-full bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 shadow-lg backdrop-blur border border-emerald-400/30 transition-transform active:scale-95"
+            onClick={() => setIsPassportOpen(true)}
+            className="pointer-events-auto rounded-full bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-mono font-bold px-4 py-2.5 shadow-lg backdrop-blur border border-amber-300/30 transition-transform active:scale-95 min-h-[44px] flex items-center justify-center"
           >
             Passport Stub
           </button>
         </div>
       </footer>
+
+      <PassportModal
+        sessionId="transkaroo-session-01"
+        isOpen={isPassportOpen}
+        onClose={() => setIsPassportOpen(false)}
+      />
     </main>
   );
 };

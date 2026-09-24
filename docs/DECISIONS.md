@@ -66,3 +66,14 @@
 - **STRIDE Mitigation (Server Authority):** Implemented in-memory progression store in `apps/api/app/db/session_store.py` where traveler rank and collected stamps are calculated exclusively on the server from verified trivia answer submissions, rejecting client-fabricated ranks.
 - **Endpoint Implementation & Rate Limiting:** Built `POST /waypoints/{id}/trivia/answer` with 5 requests/minute rate-limiting (`@limiter.limit("5/minute")`), validating user submissions against server-stored questions without exposing answers to the client. Mounted `GET /passport/{sessionId}` on the FastAPI application in `apps/api/app/main.py`.
 - **Testing Standard (Rule 6):** Validated against full test suite covering stamp awarding, incorrect submission handling, rate limit rejection (HTTP 429), and client rank rejection.
+
+## 2026-09-24: Visual Consistency Audit & Design System Tokens
+- **Context:** Normalize visual language across Passport UI, Memory Vault, Audio Capsule, and Unified Viewport shell.
+- **Tokens & Theming:** Centralized design tokens in `apps/web/src/lib/designTokens.ts`. Replaced hardcoded inline styles in `MemoryVaultSlider.tsx` and legacy parchment styling in `PassportModal.tsx` with unified Tailwind tokens:
+  - Card framing: `bg-neutral-900/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-4`.
+  - Interactive accents: Karoo gold (`amber-500` / `amber-400`) for ranks, badges, stamps, and slider handles; cyan/sky (`sky-400` / `sky-500`) for active audio playback, waveform bars, and badges.
+  - Typography: `text-base font-semibold tracking-wide text-neutral-100` (card headers), `text-xs font-mono text-neutral-400` (meta/timestamps/subtext), `text-sm text-neutral-300 leading-relaxed` (body/captions).
+  - Spacing & Radii: Container padding locked to `p-4` (compact `p-3`), `rounded-2xl` for dialogs/cards, `rounded-lg` for interactive chips/buttons.
+  - Touch targets: Unified close buttons to `w-8 h-8 rounded-full` and action buttons to touch-friendly minimum 44px hit targets.
+- **Viewport Integration:** Mounted `PassportModal` directly in `UnifiedViewport` with state toggle on the Journey HUD Passport button.
+- **Testing Standard:** Added unit test suite `apps/web/src/components/__tests__/MemoryVaultSlider.test.tsx` verifying card framing, header uppercase, year badges, caption, and pointer drag interactions. All 9 frontend test files (42 tests) passing.

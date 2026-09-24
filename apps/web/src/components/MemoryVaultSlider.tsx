@@ -87,49 +87,23 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
   return (
     <div
       data-testid="memory-vault-card"
-      className={className}
-      style={{
-        width: '100%',
-        maxWidth: 375,
-        margin: '0 auto',
-        backgroundColor: '#060B19',
-        border: '1px solid #1E293B',
-        borderRadius: 12,
-        overflow: 'hidden',
-        color: '#E2E8F0',
-        fontFamily: 'sans-serif',
-        boxSizing: 'border-box',
-        touchAction: 'none',
-        ...style,
-      }}
+      className={`w-full max-w-[375px] mx-auto bg-neutral-900/95 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden shadow-2xl text-neutral-100 flex flex-col box-border touch-none ${className}`}
+      style={style}
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '8px 12px',
-          borderBottom: '1px solid #1E293B',
-          background: 'rgba(11, 19, 43, 0.7)',
-        }}
-      >
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#FBBF24', letterSpacing: 0.5 }}>
-          {String(stationName).toUpperCase()}
-        </span>
+      <div className="flex justify-between items-center p-4 border-b border-white/10 bg-neutral-900/60">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+          <h3 className="text-base font-semibold tracking-wide text-neutral-100 uppercase truncate">
+            {String(stationName).toUpperCase()}
+          </h3>
+        </div>
         {onClose && (
           <button
             onClick={onClose}
             aria-label="Close vault"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#94A3B8',
-              cursor: 'pointer',
-              fontSize: 16,
-              lineHeight: 1,
-            }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors shrink-0"
           >
-            &times;
+            <span className="text-base leading-none">&times;</span>
           </button>
         )}
       </div>
@@ -140,111 +114,47 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        style={{
-          position: 'relative',
-          width: '100%',
-          height: 220,
-          userSelect: 'none',
-          cursor: 'ew-resize',
-          overflow: 'hidden',
-          backgroundColor: '#0B132B',
-          touchAction: 'none',
-        }}
+        className="relative w-full h-[220px] select-none cursor-ew-resize overflow-hidden bg-neutral-950 touch-none"
       >
         <img
           src={afterUrl}
           alt="Modern view"
           draggable={false}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            pointerEvents: 'none',
-          }}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
 
         <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: `${splitPos}%`,
-            height: '100%',
-            overflow: 'hidden',
-            borderRight: '2px solid #F59E0B',
-            pointerEvents: 'none',
-          }}
+          className="absolute inset-y-0 left-0 overflow-hidden border-r-2 border-amber-500 pointer-events-none"
+          style={{ width: `${splitPos}%` }}
         >
           <img
             src={beforeUrl}
             alt="Historical archival view"
             draggable={false}
+            className="absolute inset-y-0 left-0 h-full object-cover max-w-none"
             style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
               width: containerRef.current ? containerRef.current.clientWidth : 375,
-              height: '100%',
-              maxWidth: 'none',
-              objectFit: 'cover',
             }}
           />
         </div>
 
-        <span
-          style={{
-            position: 'absolute',
-            top: 8,
-            left: 8,
-            backgroundColor: 'rgba(6, 11, 25, 0.85)',
-            color: '#F59E0B',
-            border: '1px solid #F59E0B',
-            padding: '2px 6px',
-            fontSize: 10,
-            borderRadius: 4,
-            fontWeight: 700,
-          }}
-        >
+        <span className="absolute top-3 left-3 bg-neutral-950/80 border border-amber-500/40 text-amber-400 font-mono text-xs font-semibold px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-sm pointer-events-none">
           {year}
         </span>
-        <span
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            backgroundColor: 'rgba(6, 11, 25, 0.85)',
-            color: '#94A3B8',
-            border: '1px solid #334155',
-            padding: '2px 6px',
-            fontSize: 10,
-            borderRadius: 4,
-            fontWeight: 700,
-          }}
-        >
+        <span className="absolute top-3 right-3 bg-neutral-950/80 border border-white/10 text-neutral-400 font-mono text-xs font-semibold px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-sm pointer-events-none">
           NOW
         </span>
 
         <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: `${splitPos}%`,
-            transform: 'translate(-50%, -50%)',
-            width: 24,
-            height: 24,
-            borderRadius: '50%',
-            backgroundColor: '#F59E0B',
-            boxShadow: '0 0 8px rgba(245, 158, 11, 0.7)',
-            pointerEvents: 'none',
-          }}
-        />
+          className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.7)] flex items-center justify-center text-neutral-950 font-bold text-xs pointer-events-none select-none"
+          style={{ left: `${splitPos}%` }}
+        >
+          ⇄
+        </div>
       </div>
 
-      <div style={{ padding: '12px 14px' }}>
-        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: '#CBD5E1' }}>
+      <div className="p-4 bg-neutral-900/40 border-t border-white/5">
+        <p className="text-sm text-neutral-300 leading-relaxed m-0">
           {caption}
         </p>
       </div>
