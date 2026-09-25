@@ -82,3 +82,30 @@ paths:
                 properties:
                   detail:
                     type: string
+    post:
+      summary: Rejected - rank and stamps cannot be set by the client
+      description: >-
+        STRIDE "Elevation of Privilege" mitigation (issue #18). Traveler
+        rank and stamps are computed exclusively server-side from
+        verified trivia answers (POST /waypoints/{waypointId}/trivia/answer).
+        This method is intentionally not supported on this path and always
+        returns 405, regardless of the request body.
+      operationId: rejectPassportMutation
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: Unique traveler session identifier (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '405':
+          description: Rank/stamps cannot be set directly by the client
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
