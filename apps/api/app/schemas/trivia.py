@@ -1,6 +1,5 @@
-from pydantic import BaseModel, ConfigDict, Field
-
 from app.schemas.passport import StampAward
+from pydantic import BaseModel, ConfigDict, Field
 
 TRIVIA_ID_PATTERN = r"^trivia-[a-z0-9-]+$"
 

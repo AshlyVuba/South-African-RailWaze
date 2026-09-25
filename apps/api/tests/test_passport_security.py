@@ -1,6 +1,5 @@
-from fastapi.testclient import TestClient
-
 from app.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
@@ -128,9 +127,7 @@ def test_post_fabricated_stamp_is_rejected():
             "collectedStamps": [
                 {"waypointId": "station-cape-town", "stampId": "stamp-forged"}
             ],
-            "stamps": [
-                {"waypointId": "station-cape-town", "stampId": "stamp-forged"}
-            ],
+            "stamps": [{"waypointId": "station-cape-town", "stampId": "stamp-forged"}],
         },
     )
 
@@ -146,7 +143,10 @@ def test_put_and_delete_on_passport_are_also_rejected():
     # rule should hold for any other write verb aimed at the same path.
     session_id = "dod2-other-verbs"
 
-    assert client.put(f"/passport/{session_id}", json={"rank": "Rail Legend"}).status_code == 405
+    assert (
+        client.put(f"/passport/{session_id}", json={"rank": "Rail Legend"}).status_code
+        == 405
+    )
     assert client.delete(f"/passport/{session_id}").status_code == 405
 
     passport = _get_passport(session_id).json()

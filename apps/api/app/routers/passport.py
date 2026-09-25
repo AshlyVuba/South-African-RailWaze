@@ -1,7 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
-
 from app.db.session_store import get_passport
 from app.schemas.passport import PassportState
+from fastapi import APIRouter, HTTPException, status
 
 router = APIRouter(prefix="/passport", tags=["Passport"])
 

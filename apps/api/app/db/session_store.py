@@ -17,7 +17,9 @@ def compute_rank(stamp_count: int) -> Rank:
     return Rank.STOKER
 
 
-def record_stamp(session_id: str, waypoint_id: str, waypoint_name: str, badge_icon: str) -> StampAward:
+def record_stamp(
+    session_id: str, waypoint_id: str, waypoint_name: str, badge_icon: str
+) -> StampAward:
     if session_id not in _USER_STAMPS:
         _USER_STAMPS[session_id] = {}
 
@@ -48,4 +50,4 @@ def get_passport(session_id: str) -> PassportState:
         totalScore=score,
         score=score,
         completedTriviaIds=[s.waypoint_id for s in user_stamps],
-    )
+    )

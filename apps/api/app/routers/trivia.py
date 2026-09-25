@@ -1,10 +1,9 @@
-from fastapi import APIRouter, HTTPException, Request, Response, status
-
 from app.db.seed import SEED_TRIVIA
 from app.db.session_store import record_stamp
 from app.rate_limit import limiter
 from app.routers.waypoints import get_waypoint_by_id
 from app.schemas.trivia import AnswerResult, AnswerSubmission
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
 router = APIRouter(prefix="/waypoints", tags=["Trivia"])
 
@@ -12,10 +11,10 @@ router = APIRouter(prefix="/waypoints", tags=["Trivia"])
 @router.post("/{waypoint_id}/trivia/answer", response_model=AnswerResult)
 @limiter.limit("5/minute")
 async def submit_trivia_answer(
-        request: Request,
-        response: Response,
-        waypoint_id: str,
-        submission: AnswerSubmission,
+    request: Request,
+    response: Response,
+    waypoint_id: str,
+    submission: AnswerSubmission,
 ):
     # async def (not def) is required here - see the comment on
     # get_waypoint_trivia in routers/waypoints.py for why.

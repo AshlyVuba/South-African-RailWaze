@@ -1,6 +1,5 @@
-from fastapi.testclient import TestClient
-
 from app.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
@@ -94,7 +93,9 @@ def test_rate_limit_exceeded_response_has_retry_after_header():
     session_id = "test-session-retry-after"
     headers = _session_header(session_id)
     for _ in range(5):
-        client.post(KIMBERLEY_ANSWER_URL, json=_payload(session_id, 99), headers=headers)
+        client.post(
+            KIMBERLEY_ANSWER_URL, json=_payload(session_id, 99), headers=headers
+        )
 
     blocked = client.post(
         KIMBERLEY_ANSWER_URL, json=_payload(session_id, 99), headers=headers
@@ -108,7 +109,9 @@ def test_rate_limit_is_scoped_per_session_not_shared_globally():
     # Exhaust session A's budget...
     session_a = _session_header("session-a")
     for _ in range(5):
-        client.post(KIMBERLEY_ANSWER_URL, json=_payload("session-a", 99), headers=session_a)
+        client.post(
+            KIMBERLEY_ANSWER_URL, json=_payload("session-a", 99), headers=session_a
+        )
     exhausted = client.post(
         KIMBERLEY_ANSWER_URL, json=_payload("session-a", 99), headers=session_a
     )
