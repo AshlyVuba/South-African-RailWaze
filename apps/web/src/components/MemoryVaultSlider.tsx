@@ -1,228 +1,163 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
-// Conforms to AI Guardrails: Loud placeholders and mobile responsiveness
+export interface MemoryVaultData {
+  before_image_url?: string;
+  after_image_url?: string;
+  beforeImageUrl?: string;
+  afterImageUrl?: string;
+  caption?: string;
+  year?: number;
+}
+
+export interface WaypointItem {
+  id?: string;
+  name?: string;
+  km_mark?: number;
+  memory_vault?: MemoryVaultData;
+}
+
 export interface MemoryVaultSliderProps {
-  stationId: string;
+  stationId?: string;
+  waypoint?: WaypointItem | null;
+  onClose?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }
 
-/**
- * MemoryVaultSlider: Interactive "Then vs. Now" historical imagery comparison slider
- * From Issue #5 (Iteration 2)
- */
 export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
   stationId,
+  waypoint,
+  onClose,
   className = '',
   style,
 }) => {
-  // Slider position from 0 (all 'Now') to 100 (all 'Then')
-  const [sliderPosition, setSliderPosition] = useState<number>(50);
+  const [splitPos, setSplitPos] = useState<number>(50);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const isDragging = useRef<boolean>(false);
 
-  const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliderPosition(Number(e.target.value));
+  const vault = waypoint?.memory_vault ?? {
+    before_image_url: 'PLACEHOLDER_vault_before.jpg',
+    after_image_url: 'PLACEHOLDER_vault_after.jpg',
+    caption: `Historical archival perspective for ${stationId ?? waypoint?.id ?? 'this corridor stop'}.`,
+    year: 1900,
+  };
+
+  const beforeUrl =
+    vault.before_image_url || vault.beforeImageUrl || 'PLACEHOLDER_vault_before.jpg';
+  const afterUrl =
+    vault.after_image_url || vault.afterImageUrl || 'PLACEHOLDER_vault_after.jpg';
+  const caption = vault.caption || 'Historical archival perspective.';
+  const year = vault.year || 1900;
+  const stationName = waypoint?.name || stationId || 'Corridor Waypoint';
+
+  const calculatePosition = useCallback((clientX: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const offsetX = clientX - rect.left;
+    const percent = (offsetX / rect.width) * 100;
+    setSplitPos(Math.max(0, Math.min(100, percent)));
   }, []);
 
-  // PLACEHOLDER_METADATA: Real archival assets must be verified via contracts / media pipeline
-  // // TODO: verify historical photo archive source and copyright attribution for stationId
-  const thenYear = 'PLACEHOLDER_THEN_YEAR (circa 1895)';
-  const nowYear = 'PLACEHOLDER_NOW_YEAR (Present Day)';
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDragging.current = true;
+    const target = e.currentTarget as HTMLDivElement;
+    if (typeof target.setPointerCapture === 'function') {
+      target.setPointerCapture(e.pointerId);
+    }
+    calculatePosition(e.clientX);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    calculatePosition(e.clientX);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDragging.current = false;
+    const target = e.currentTarget as HTMLDivElement;
+    try {
+      if (typeof target.releasePointerCapture === 'function') {
+        target.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // Graceful fallback for non-captured targets.
+    }
+  };
 
   return (
     <div
-      className={`memory-vault-slider w-full max-w-xl mx-auto flex flex-col gap-4 text-white ${className}`}
-      data-testid="memory-vault-slider"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        width: '100%',
-        boxSizing: 'border-box',
-        ...style,
-      }}
+      data-testid="memory-vault-card"
+      className={`w-full max-w-[375px] mx-auto bg-neutral-900/95 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden shadow-2xl text-neutral-100 flex flex-col box-border touch-none ${className}`}
+      style={style}
     >
-      {/* Station context banner */}
-      <div className="flex items-center justify-between text-xs text-slate-400">
-        <span className="font-mono uppercase tracking-wider">
-          Station ID: {stationId}
-        </span>
-        <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[11px]">
-          {/* PLACEHOLDER_TAG */}
-          PLACEHOLDER_HERITAGE_ARCHIVE
-        </span>
-      </div>
-
-      {/* Comparison Viewport */}
-      <div
-        className="relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-xl overflow-hidden select-none bg-slate-950 border border-slate-800 shadow-inner"
-        style={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: '16 / 10',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          backgroundColor: '#020617',
-          border: '1px solid #1e293b',
-          userSelect: 'none',
-        }}
-      >
-        {/* Layer 1: "Now" (Contemporary - Base Layer) */}
-        <div
-          className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-800 to-slate-900"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            backgroundColor: '#1e293b',
-          }}
-        >
-          {/* PLACEHOLDER_NOW_IMAGE: Modern station view */}
-          <div className="text-center space-y-2">
-            <span className="text-4xl">🚆</span>
-            <div className="text-sm font-semibold text-emerald-400">
-              {/* PLACEHOLDER_MODERN_TAG */}
-              {nowYear}
-            </div>
-            <p className="text-xs text-slate-400 max-w-xs mx-auto">
-              {/* // TODO: verify contemporary photography source */}
-              Modern passenger terminal and electrified rail infrastructure
-            </p>
-          </div>
+      <div className="flex justify-between items-center p-4 border-b border-white/10 bg-neutral-900/60">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+          <h3 className="text-base font-semibold tracking-wide text-neutral-100 uppercase truncate">
+            {String(stationName).toUpperCase()}
+          </h3>
         </div>
-
-        {/* Layer 2: "Then" (Archival - Clipped Overlay) */}
-        <div
-          className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-stone-900 to-amber-950/80 filter sepia-[0.35]"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)`,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            backgroundColor: '#292524',
-          }}
-        >
-          {/* PLACEHOLDER_THEN_IMAGE: Archival steam locomotive / station view */}
-          <div className="text-center space-y-2">
-            <span className="text-4xl">🚂</span>
-            <div className="text-sm font-semibold text-amber-300">
-              {/* PLACEHOLDER_ARCHIVE_TAG */}
-              {thenYear}
-            </div>
-            <p className="text-xs text-stone-300 max-w-xs mx-auto">
-              {/* // TODO: verify archival historical facts and collection rights */}
-              Original Victorian-era masonry, steam depot, and telegraph lines
-            </p>
-          </div>
-        </div>
-
-        {/* Divider line indicator */}
-        <div
-          className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]"
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: `${sliderPosition}%`,
-            width: '2px',
-            backgroundColor: '#ffffff',
-            pointerEvents: 'none',
-            zIndex: 10,
-            boxShadow: '0 0 8px rgba(255, 255, 255, 0.8)',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '28px',
-              height: '28px',
-              borderRadius: '9999px',
-              backgroundColor: '#0f172a',
-              border: '2px solid #ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontSize: '12px',
-              fontWeight: 'bold',
-            }}
+        {onClose && (
+          <button
+            onClick={onClose}
+            aria-label="Close vault"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors shrink-0"
           >
-            ⇄
-          </div>
-        </div>
-
-        {/* Badges */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '8px',
-            left: '8px',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            fontSize: '11px',
-            color: '#fde68a',
-            zIndex: 10,
-          }}
-        >
-          Then
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            fontSize: '11px',
-            color: '#6ee7b7',
-            zIndex: 10,
-          }}
-        >
-          Now
-        </div>
+            <span className="text-base leading-none">&times;</span>
+          </button>
+        )}
       </div>
 
-      {/* Interactive Range Slider Control */}
-      <div className="flex flex-col gap-1">
-        <div className="flex justify-between text-xs text-slate-400">
-          <span>Archival Past (1890s)</span>
-          <span>Slide to Compare</span>
-          <span>Present (2020s)</span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={sliderPosition}
-          onChange={handleSliderChange}
-          aria-label="Compare Then and Now imagery"
-          aria-valuenow={sliderPosition}
-          className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-ew-resize accent-amber-400 touch-none"
-          style={{
-            width: '100%',
-            cursor: 'ew-resize',
-          }}
+      <div
+        ref={containerRef}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        className="relative w-full h-[220px] select-none cursor-ew-resize overflow-hidden bg-neutral-950 touch-none"
+      >
+        <img
+          src={afterUrl}
+          alt="Modern view"
+          draggable={false}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
+
+        <div
+          className="absolute inset-y-0 left-0 overflow-hidden border-r-2 border-amber-500 pointer-events-none"
+          style={{ width: `${splitPos}%` }}
+        >
+          <img
+            src={beforeUrl}
+            alt="Historical archival view"
+            draggable={false}
+            className="absolute inset-y-0 left-0 h-full object-cover max-w-none"
+            style={{
+              width: containerRef.current ? containerRef.current.clientWidth : 375,
+            }}
+          />
+        </div>
+
+        <span className="absolute top-3 left-3 bg-neutral-950/80 border border-amber-500/40 text-amber-400 font-mono text-xs font-semibold px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-sm pointer-events-none">
+          {year}
+        </span>
+        <span className="absolute top-3 right-3 bg-neutral-950/80 border border-white/10 text-neutral-400 font-mono text-xs font-semibold px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-sm pointer-events-none">
+          NOW
+        </span>
+
+        <div
+          className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.7)] flex items-center justify-center text-neutral-950 font-bold text-xs pointer-events-none select-none"
+          style={{ left: `${splitPos}%` }}
+        >
+          ⇄
+        </div>
       </div>
 
-      {/* Historical Context Caption */}
-      <p className="text-xs text-slate-400 italic text-center">
-        {/* // TODO: verify historical narrative for {stationId} */}
-        {/* PLACEHOLDER_HISTORICAL_NARRATIVE */}
-        Archival photos depict the arrival of the Cape Government Railways and early 20th-century gold and diamond corridor expansions.
-      </p>
+      <div className="p-4 bg-neutral-900/40 border-t border-white/5">
+        <p className="text-sm text-neutral-300 leading-relaxed m-0">
+          {caption}
+        </p>
+      </div>
     </div>
   );
 };

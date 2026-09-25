@@ -20,10 +20,10 @@ describe('PassportModal Component', () => {
   beforeEach(() => {
     // vi.fn() directly replaces jest.fn() in Vite setups
     globalThis.fetch = vi.fn().mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockPassportData),
-      } as Response)
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockPassportData),
+        } as Response)
     );
   });
 
@@ -33,11 +33,11 @@ describe('PassportModal Component', () => {
 
   test('fetches and renders server rank and collected stamps per schema', async () => {
     render(
-      <PassportModal
-        sessionId="550e8400-e29b-41d4-a716-446655440000"
-        isOpen={true}
-        onClose={() => {}}
-      />
+        <PassportModal
+            sessionId="550e8400-e29b-41d4-a716-446655440000"
+            isOpen={true}
+            onClose={() => {}}
+        />
     );
 
     await waitFor(() => {
@@ -47,17 +47,17 @@ describe('PassportModal Component', () => {
     });
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'http://localhost:8000/passport/550e8400-e29b-41d4-a716-446655440000'
+        'http://localhost:8000/passport/550e8400-e29b-41d4-a716-446655440000'
     );
   });
 
   test('re-fetches state upon custom event without full page reload', async () => {
     render(
-      <PassportModal
-        sessionId="550e8400-e29b-41d4-a716-446655440000"
-        isOpen={true}
-        onClose={() => {}}
-      />
+        <PassportModal
+            sessionId="550e8400-e29b-41d4-a716-446655440000"
+            isOpen={true}
+            onClose={() => {}}
+        />
     );
 
     await waitFor(() => {
@@ -69,5 +69,27 @@ describe('PassportModal Component', () => {
     await waitFor(() => {
       expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     });
+  });
+
+  test('shows a non-alarming queued state instead of a raw error when the network is unreachable', async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+
+    render(
+        <PassportModal
+            sessionId="550e8400-e29b-41d4-a716-446655440000"
+            isOpen={true}
+            onClose={() => {}}
+        />
+    );
+
+    await waitFor(() => {
+      expect(
+          screen.getByText(/you.re offline.*last saved passport/i)
+      ).toBeInTheDocument();
+    });
+
+    // Should not show the generic error state for this case - a network
+    // failure is meant to be queued/retried, not treated as a hard error.
+    expect(screen.queryByText(/unknown error fetching passport/i)).not.toBeInTheDocument();
   });
 });

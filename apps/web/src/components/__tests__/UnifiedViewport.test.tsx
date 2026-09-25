@@ -2,23 +2,26 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { UnifiedViewport } from '../UnifiedViewport';
 
-// Mock child components to isolate layout & DOM behavior without WebGL errors
 vi.mock('../MapCanvas', () => ({
   MapCanvas: ({
     onSelectWaypoint,
+    onWaypointReached,
   }: {
     onSelectWaypoint: (st: { id?: string; stationId?: string; name: string; [key: string]: unknown }) => void;
+    onWaypointReached?: (waypointId: string) => void;
   }) => (
     <div data-testid="map-canvas">
-      <button
-        onClick={() => onSelectWaypoint({ stationId: 'pretoria', name: 'Pretoria Station' })}
-      >
+      <button onClick={() => onSelectWaypoint({ stationId: 'pretoria', name: 'Pretoria Station' })}>
         Select Pretoria Station
       </button>
-      <button
-        onClick={() => onSelectWaypoint({ stationId: 'kimberley', name: 'Kimberley Station' })}
-      >
+      <button onClick={() => onSelectWaypoint({ stationId: 'kimberley', name: 'Kimberley Station' })}>
         Select Kimberley Station
+      </button>
+      <button onClick={() => onWaypointReached?.('wp_kimberley')}>
+        Reach Kimberley Waypoint First
+      </button>
+      <button onClick={() => onWaypointReached?.('wp_kimberley')}>
+        Reach Kimberley Waypoint Again
       </button>
     </div>
   ),
@@ -30,10 +33,11 @@ vi.mock('../MemoryVaultSlider', () => ({
   ),
 }));
 
+vi.mock('../ConnectivityBanner', () => ({
+  ConnectivityBanner: () => <div data-testid="mock-connectivity-banner" />,
+}));
+
 describe('UnifiedViewport Integration & Responsive DoD Tests', () => {
-  /* -------------------------------------------------------------
-     Responsive Layout Pass Tests (Issue DoD)
-  ------------------------------------------------------------- */
   it('enforces horizontal overflow containment on root container', () => {
     render(<UnifiedViewport />);
     const root = screen.getByTestId('unified-viewport-root');
@@ -48,9 +52,6 @@ describe('UnifiedViewport Integration & Responsive DoD Tests', () => {
     expect(screen.getByLabelText('Journey HUD').className).toContain('pb-safe');
   });
 
-  /* -------------------------------------------------------------
-     Breakpoints DoD: 375px, 414px, and Tablet (768px)
-  ------------------------------------------------------------- */
   const breakpoints = [
     { name: 'small mobile (375px - iPhone SE)', width: 375, height: 667 },
     { name: 'standard mobile (414px - iPhone Plus/Max)', width: 414, height: 896 },
@@ -65,34 +66,31 @@ describe('UnifiedViewport Integration & Responsive DoD Tests', () => {
 
       render(<UnifiedViewport />);
 
-      // 1. Root overflow containment
       const root = screen.getByTestId('unified-viewport-root');
       expect(root.className).toContain('overflow-x-hidden');
       expect(root.className).toContain('max-w-[100vw]');
 
-      // 2. Coexistence of MapCanvas, Audio Capsule Bar, and Journey HUD
       expect(screen.getByTestId('map-canvas')).toBeInTheDocument();
       expect(screen.getByLabelText('Audio Capsule Bar')).toBeInTheDocument();
       expect(screen.getByLabelText('Journey HUD')).toBeInTheDocument();
 
-      // 3. Open Memory Vault panel and verify coexistence
       fireEvent.click(screen.getByRole('button', { name: /Select Pretoria Station/i }));
       const panel = screen.getByTestId('memory-vault-panel');
       expect(panel).toBeInTheDocument();
       expect(panel.className).toContain('pb-safe');
-
-      // Map canvas remains mounted and intact
       expect(screen.getByTestId('map-canvas')).toBeInTheDocument();
     });
   });
 
-  /* -------------------------------------------------------------
-     Viewport State & Waypoint Interaction Tests
-  ------------------------------------------------------------- */
   it('renders MapCanvas without opening the Memory Vault initially', () => {
     render(<UnifiedViewport />);
     expect(screen.getByTestId('map-canvas')).toBeInTheDocument();
     expect(screen.queryByLabelText('Station Memory Vault')).not.toBeInTheDocument();
+  });
+
+  it('mounts the connectivity status indicator', () => {
+    render(<UnifiedViewport />);
+    expect(screen.getByTestId('mock-connectivity-banner')).toBeInTheDocument();
   });
 
   it('tapping Pretoria waypoint opens Pretoria card (not any other station)', () => {
@@ -128,10 +126,19 @@ describe('UnifiedViewport Integration & Responsive DoD Tests', () => {
     const mapCanvas = screen.getByTestId('map-canvas');
     expect(mapCanvas).toBeInTheDocument();
 
-    const closeBtn = screen.getByRole('button', { name: /Close card/i });
-    fireEvent.click(closeBtn);
+    fireEvent.click(screen.getByRole('button', { name: /Close card/i }));
 
     expect(screen.queryByLabelText('Station Memory Vault')).not.toBeInTheDocument();
     expect(screen.getByTestId('map-canvas')).toBe(mapCanvas);
+  });
+
+  it('automatically opens the Audio Capsule once when a waypoint is reached and prevents duplicate stacking', () => {
+    render(<UnifiedViewport />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Reach Kimberley Waypoint First/i }));
+    expect(screen.getAllByLabelText('Audio Capsule Player')).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /Reach Kimberley Waypoint Again/i }));
+    expect(screen.getAllByLabelText('Audio Capsule Player')).toHaveLength(1);
   });
 });

@@ -1,22 +1,23 @@
-from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
-from app.schemas.trivia import TriviaQuestion
-from app.schemas.waypoint import Waypoint
-from fastapi import APIRouter, HTTPException, Request, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
-limiter = Limiter(key_func=get_remote_address)
+from app.db.seed import SEED_TRIVIA, SEED_WAYPOINTS
+from app.rate_limit import limiter
+from app.schemas.trivia import TriviaQuestionPublic
+from app.schemas.waypoint import WaypointFeature, WaypointFeatureCollection
+
 router = APIRouter(prefix="/waypoints", tags=["Waypoints"])
 
 
-@router.get("", response_model=list[Waypoint])
+@router.get("", response_model=WaypointFeatureCollection)
 def get_waypoints():
     return SEED_WAYPOINTS
 
 
-@router.get("/{waypoint_id}", response_model=Waypoint)
+@router.get("/{waypoint_id}", response_model=WaypointFeature)
 def get_waypoint_by_id(waypoint_id: str):
-    waypoint = next((wp for wp in SEED_WAYPOINTS if wp.id == waypoint_id), None)
+    waypoint = next(
+        (f for f in SEED_WAYPOINTS.features if f.id == waypoint_id), None
+    )
     if not waypoint:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -25,8 +26,16 @@ def get_waypoint_by_id(waypoint_id: str):
     return waypoint
 
 
-@router.get("/{waypoint_id}/trivia", response_model=list[TriviaQuestion])
+@router.get("/{waypoint_id}/trivia", response_model=list[TriviaQuestionPublic])
 @limiter.limit("30/minute")
-def get_waypoint_trivia(request: Request, waypoint_id: str):
+def get_waypoint_trivia(request: Request, response: Response, waypoint_id: str):
+    # response: Response is required here, not decorative - slowapi's
+    # @limiter.limit decorator needs a real Response object to attach
+    # rate-limit headers to. Without this parameter, FastAPI never injects
+    # one, slowapi receives None, and _inject_headers raises on every
+    # request (even ones under the limit), not just on the 429 path.
     get_waypoint_by_id(waypoint_id)
-    return [t for t in SEED_TRIVIA if t.waypoint_id == waypoint_id]
+    return [
+        TriviaQuestionPublic.from_internal(q)
+        for q in SEED_TRIVIA.get(waypoint_id, [])
+    ]

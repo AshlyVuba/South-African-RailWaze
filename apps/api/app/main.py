@@ -1,9 +1,15 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+<<<<<<< HEAD
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+=======
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+>>>>>>> f44160835c7e493cf325ac0cc5fe778e5b17b200
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.middleware.error_handler import (
@@ -11,9 +17,14 @@ from app.middleware.error_handler import (
     http_exception_handler,
     validation_exception_handler,
 )
+<<<<<<< HEAD
 from app.routers import waypoints
 
 limiter = Limiter(key_func=get_remote_address)
+=======
+from app.rate_limit import limiter
+from app.routers import passport, trivia, waypoints
+>>>>>>> f44160835c7e493cf325ac0cc5fe778e5b17b200
 
 app = FastAPI(
     title="RailWaze API",
@@ -46,7 +57,13 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
+# Required so slowapi injects X-RateLimit-* / Retry-After headers and so
+# any future `default_limits=[...]` on the shared limiter actually apply.
+app.add_middleware(SlowAPIMiddleware)
+
 app.include_router(waypoints.router)
+app.include_router(trivia.router)
+app.include_router(passport.router)
 
 
 @app.get("/health")

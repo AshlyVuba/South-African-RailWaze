@@ -79,16 +79,16 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
 
       for (let i = 0; i < bufferLength; i++) {
         const barHeight = (dataArray[i] / 255) * height;
-        ctx.fillStyle = '#EAB308';
+        ctx.fillStyle = '#38bdf8';
         ctx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
         x += barWidth;
       }
     } else {
       const progress = durationSeconds > 0 ? currentTime / durationSeconds : 0;
-      ctx.fillStyle = '#4B5563';
+      ctx.fillStyle = '#404040';
       ctx.fillRect(0, height / 2 - 2, width, 4);
 
-      ctx.fillStyle = '#EAB308';
+      ctx.fillStyle = '#38bdf8';
       ctx.fillRect(0, height / 2 - 2, width * Math.min(Math.max(progress, 0), 1), 4);
     }
 
@@ -155,7 +155,7 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
         isOpen ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0 pointer-events-none'
       }`}
     >
-      <div className="bg-neutral-900/95 backdrop-blur-md border border-neutral-700/80 rounded-2xl p-4 shadow-2xl flex flex-col gap-3">
+      <div className="bg-neutral-900/95 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl flex flex-col gap-3">
         <audio
           ref={audioRef}
           src={audioUrl}
@@ -176,7 +176,7 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
               onClick={togglePlay}
               disabled={!isAudioLoaded}
               aria-label={isPlaying ? 'Pause' : 'Play'}
-              className="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-950 flex items-center justify-center font-bold transition-colors shrink-0 shadow-md focus:outline-none focus:ring-2 focus:ring-amber-300"
+              className="w-10 h-10 rounded-full bg-sky-500 hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-950 flex items-center justify-center font-bold transition-colors shrink-0 shadow-md shadow-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-300"
             >
               {isPlaying ? (
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -190,10 +190,10 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
             </button>
 
             <div className="overflow-hidden">
-              <span className="text-[10px] tracking-widest uppercase font-semibold text-amber-500 block">
+              <span className="text-xs font-mono tracking-widest uppercase font-semibold text-sky-400 block">
                 Folklore Audio
               </span>
-              <h4 className="text-sm font-medium text-neutral-100 truncate" title={title}>
+              <h4 className="text-base font-semibold tracking-wide text-neutral-100 truncate" title={title}>
                 {title}
               </h4>
             </div>
@@ -204,7 +204,7 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Dismiss audio player"
-              className="text-neutral-400 hover:text-neutral-200 p-1.5 transition-colors shrink-0 rounded-lg hover:bg-neutral-800"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors shrink-0"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -220,7 +220,7 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
             height={28}
             className="w-full h-7 rounded bg-neutral-950/60"
           />
-          <div className="flex justify-between text-[11px] text-neutral-400 font-mono">
+          <div className="flex justify-between text-xs font-mono text-neutral-400">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(durationSeconds)}</span>
           </div>
