@@ -1,9 +1,3 @@
-from app.middleware.error_handler import (
-    generic_exception_handler,
-    http_exception_handler,
-    validation_exception_handler,
-)
-from app.routers import waypoints
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +5,13 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.middleware.error_handler import (
+    generic_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
+)
+from app.routers import passport, trivia, waypoints
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -39,6 +40,8 @@ app.add_middleware(
 )
 
 app.include_router(waypoints.router)
+app.include_router(trivia.router)
+app.include_router(passport.router)
 
 
 @app.get("/health")

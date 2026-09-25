@@ -5,15 +5,16 @@ purpose. We don't add fail-on-purpose routes to app.main itself - a
 production app shouldn't ship a route that exists solely to blow up.
 """
 
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.testclient import TestClient
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from app.middleware.error_handler import (
     generic_exception_handler,
     http_exception_handler,
     validation_exception_handler,
 )
-from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
-from fastapi.testclient import TestClient
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 _probe_app = FastAPI()
 _probe_app.add_exception_handler(StarletteHTTPException, http_exception_handler)

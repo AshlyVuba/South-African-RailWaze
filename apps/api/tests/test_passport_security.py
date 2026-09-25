@@ -1,5 +1,6 @@
-from app.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app)
 
@@ -144,8 +145,8 @@ def test_put_and_delete_on_passport_are_also_rejected():
     session_id = "dod2-other-verbs"
 
     assert (
-        client.put(f"/passport/{session_id}", json={"rank": "Rail Legend"}).status_code
-        == 405
+            client.put(f"/passport/{session_id}", json={"rank": "Rail Legend"}).status_code
+            == 405
     )
     assert client.delete(f"/passport/{session_id}").status_code == 405
 
