@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import maplibregl, { Map, Marker } from 'maplibre-gl';
+import type { FeatureCollection, LineString, Point } from 'geojson';
 import length from '@turf/length';
 import along from '@turf/along';
 import bearing from '@turf/bearing';
@@ -13,44 +14,24 @@ export interface WaypointProperties {
   [key: string]: unknown;
 }
 
-type GeoJsonLineString = {
-  type: 'LineString';
-  coordinates: [number, number][];
-};
-
-type GeoJsonPointGeometry = {
-  type: 'Point';
-  coordinates: [number, number];
-};
-
-type GeoJsonFeatureCollection<TGeometry> = {
-  type: 'FeatureCollection';
-  features: Array<{
-    type: 'Feature';
-    id?: string | number;
-    properties: Record<string, unknown> | null;
-    geometry: TGeometry;
-  }>;
-};
-
 export interface MapCanvasProps {
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
   onSelectWaypoint?: (station: WaypointProperties) => void;
-  routeGeoJson?: GeoJsonFeatureCollection<GeoJsonLineString>;
-  waypointsGeoJson?: GeoJsonFeatureCollection<GeoJsonPointGeometry>;
+  routeGeoJson?: FeatureCollection<LineString>;
+  waypointsGeoJson?: FeatureCollection<Point>;
   progressPercent?: number;
   onWaypointReached?: (waypointId: string) => void;
   proximityThresholdKm?: number;
 }
 
-const emptyRouteGeoJson: GeoJsonFeatureCollection<GeoJsonLineString> = {
+const emptyRouteGeoJson: FeatureCollection<LineString> = {
   type: 'FeatureCollection',
   features: [],
 };
 
-const emptyWaypointsGeoJson: GeoJsonFeatureCollection<GeoJsonPointGeometry> = {
+const emptyWaypointsGeoJson: FeatureCollection<Point> = {
   type: 'FeatureCollection',
   features: [],
 };
@@ -84,6 +65,24 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     const midpoint = routeCoords[Math.floor(routeCoords.length / 2)] ?? [0, 0];
     return [midpoint[0], midpoint[1]] as [number, number];
   }, [lineFeature]);
+  const initialBounds = useMemo<[[number, number], [number, number]] | null>(() => {
+    const coordinates = [
+      ...(lineFeature?.geometry.coordinates ?? []),
+      ...waypointsGeoJson.features.map((feature) => feature.geometry.coordinates),
+    ];
+    if (coordinates.length === 0) {
+      return null;
+    }
+
+    const [firstLng, firstLat] = coordinates[0];
+    return coordinates.slice(1).reduce(
+      (bounds, [lng, lat]) => [
+        [Math.min(bounds[0][0], lng), Math.min(bounds[0][1], lat)],
+        [Math.max(bounds[1][0], lng), Math.max(bounds[1][1], lat)],
+      ],
+      [[firstLng, firstLat], [firstLng, firstLat]] as [[number, number], [number, number]],
+    );
+  }, [lineFeature, waypointsGeoJson]);
 
   useEffect(() => {
     totalLengthKm.current = lineFeature ? length(lineFeature, { units: 'kilometers' }) : 0;
@@ -205,9 +204,36 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             'circle-stroke-color': '#D97706',
           },
         });
+
+        map.on('click', 'waypoint-points', (event) => {
+          const feature = event.features?.[0];
+          if (!feature || !onSelectWaypoint) {
+            return;
+          }
+
+          const properties = feature.properties ?? {};
+          onSelectWaypoint({
+            ...properties,
+            stationId: String(properties.id ?? feature.id ?? ''),
+            name: String(properties.name ?? 'Waypoint'),
+          });
+        });
+        map.on('mouseenter', 'waypoint-points', () => {
+          map.getCanvas().style.cursor = 'pointer';
+        });
+        map.on('mouseleave', 'waypoint-points', () => {
+          map.getCanvas().style.cursor = '';
+        });
       }
 
       mapRef.current = map;
+      if (initialBounds) {
+        map.fitBounds(initialBounds, {
+          padding: { top: 72, right: 28, bottom: 108, left: 28 },
+          maxZoom: 5.25,
+          duration: 0,
+        });
+      }
     });
 
     return () => {
@@ -218,7 +244,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       map.remove();
       mapRef.current = null;
     };
-  }, [initialCenter, routeGeoJson, waypointsGeoJson]);
+  }, [initialBounds, initialCenter, onSelectWaypoint, routeGeoJson, waypointsGeoJson]);
 
   const updatePosition = useCallback(
       (pct: number) => {
@@ -300,12 +326,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             width: '100%',
             minHeight: '320px',
             height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#121826',
-            color: '#f3f4f6',
+            backgroundColor: '#060B19',
             overflow: 'hidden',
             boxSizing: 'border-box',
             touchAction: 'none',
@@ -322,96 +343,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
               touchAction: 'none',
             }}
         />
-
-        <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '16px',
-              textAlign: 'center',
-              maxWidth: '90%',
-            }}
-        >
-          <div
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                letterSpacing: '0.025em',
-              }}
-          >
-            {/* PLACEHOLDER_TERRAIN_VIEWPORT */}
-            RailWaze Map Viewport
-          </div>
-          <p
-              style={{
-                fontSize: '0.875rem',
-                color: '#9ca3af',
-                margin: 0,
-              }}
-          >
-            {/* // TODO: verify MapLibre GL 3D terrain and route.geojson layer integration */}
-            Pretoria &rarr; Cape Town Corridor (MapLibre 3D Terrain)
-          </p>
-
-          {onSelectWaypoint && (
-              <div
-                  style={{
-                    display: 'flex',
-                    gap: '8px',
-                    flexWrap: 'wrap',
-                    justifyContent: 'center',
-                    marginTop: '12px',
-                  }}
-              >
-                <button
-                    type="button"
-                    onClick={() =>
-                        onSelectWaypoint({
-                          stationId: 'pretoria',
-                          name: 'Pretoria Station',
-                        })
-                    }
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      backgroundColor: '#2563eb',
-                      color: '#ffffff',
-                      fontSize: '0.8125rem',
-                      fontWeight: 500,
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                >
-                  {/* PLACEHOLDER_TEST_WAYPOINT_PRETORIA */}
-                  Select Pretoria Station
-                </button>
-                <button
-                    type="button"
-                    onClick={() =>
-                        onSelectWaypoint({
-                          stationId: 'kimberley',
-                          name: 'Kimberley Station',
-                        })
-                    }
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      backgroundColor: '#374151',
-                      color: '#ffffff',
-                      fontSize: '0.8125rem',
-                      fontWeight: 500,
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                >
-                  {/* PLACEHOLDER_TEST_WAYPOINT_KIMBERLEY */}
-                  Select Kimberley Station
-                </button>
-              </div>
-          )}
-        </div>
 
         {children}
       </div>
