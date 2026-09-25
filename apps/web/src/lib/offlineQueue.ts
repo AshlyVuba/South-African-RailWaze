@@ -45,9 +45,10 @@ export interface QueuedRequestResult<T> {
  * Call flushQueue(queueName) once connectivity returns (e.g. from the
  * browser's 'online' event) to replay everything that queued up.
  *
- * This is the utility any connectivity-dependent action should use -
- * the trivia-answer submission (see TriviaPrompt.tsx, issue #28) is the
- * first consumer, under the 'trivia-answers' queue name.
+ * This is the utility any future connectivity-dependent action should use -
+ * in particular the trivia-answer submission endpoint (Iteration 4 Issue
+ * #0b, not yet built as of this ticket) should call this rather than a
+ * bare fetch, once it exists.
  */
 export async function queuedRequest<T>(
     queueName: string,
