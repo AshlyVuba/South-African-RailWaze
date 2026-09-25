@@ -1,4 +1,5 @@
 import pytest
+
 from app.rate_limit import limiter
 
 

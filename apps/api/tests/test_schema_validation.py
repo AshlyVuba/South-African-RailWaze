@@ -1,4 +1,6 @@
 import pytest
+from pydantic import ValidationError
+
 from app.schemas.passport import PassportStamp, PassportState, TravelerRank
 from app.schemas.trivia import TriviaAnswerSubmission, TriviaQuestion
 from app.schemas.waypoint import (
@@ -7,7 +9,6 @@ from app.schemas.waypoint import (
     WaypointFeatureCollection,
     WaypointProperties,
 )
-from pydantic import ValidationError
 
 
 def _valid_properties_kwargs():
