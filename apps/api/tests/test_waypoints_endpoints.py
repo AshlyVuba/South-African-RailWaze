@@ -34,11 +34,14 @@ def test_get_invalid_waypoint_returns_404():
     assert "not found" in data["error"]["message"].lower()
 
 
-def test_get_waypoint_trivia_returns_validated_questions():
+def test_get_waypoint_trivia_returns_public_questions_without_answer():
     response = client.get("/waypoints/station-matjiesfontein/trivia")
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
     assert data[0]["waypoint_id"] == "station-matjiesfontein"
     assert len(data[0]["options"]) == 4
-    assert "answer_index" in data[0]
+    # issue #17 DoD: the correct answer must never appear in this response.
+    assert "answer_index" not in data[0]
+    assert "explanation" not in data[0]
+    assert set(data[0].keys()) == {"id", "waypoint_id", "question", "options"}

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
-from app.db.seed import SEED_TRIVIA, SEED_TRIVIA_BY_ID
+from app.db.seed import SEED_TRIVIA
 from app.db.session_store import record_stamp
 from app.rate_limit import limiter
+from app.routers.waypoints import get_waypoint_by_id
 from app.schemas.trivia import AnswerResult, AnswerSubmission
 
 router = APIRouter(prefix="/waypoints", tags=["Trivia"])
@@ -10,41 +11,43 @@ router = APIRouter(prefix="/waypoints", tags=["Trivia"])
 
 @router.post("/{waypoint_id}/trivia/answer", response_model=AnswerResult)
 @limiter.limit("5/minute")
-def submit_trivia_answer(
-    request: Request,
-    waypoint_id: str,
-    submission: AnswerSubmission,
+async def submit_trivia_answer(
+        request: Request,
+        response: Response,
+        waypoint_id: str,
+        submission: AnswerSubmission,
 ):
-    question = None
-    if SEED_TRIVIA.get(waypoint_id):
-        question = SEED_TRIVIA[waypoint_id][0]
-    elif SEED_TRIVIA.get(f"station-{waypoint_id}"):
-        question = SEED_TRIVIA[f"station-{waypoint_id}"][0]
-    elif waypoint_id in SEED_TRIVIA_BY_ID:
-        question = SEED_TRIVIA_BY_ID[waypoint_id]
+    # async def (not def) is required here - see the comment on
+    # get_waypoint_trivia in routers/waypoints.py for why.
+    #
+    # response: Response is required for the same reason noted there -
+    # slowapi's @limiter.limit decorator needs a real Response object to
+    # attach rate-limit headers to, or it raises on every call.
+    waypoint = get_waypoint_by_id(waypoint_id)  # raises 404 if unknown
 
-    if not question:
+    questions = SEED_TRIVIA.get(waypoint_id)
+    if not questions:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Trivia not found for waypoint: {waypoint_id}",
+            detail=f"No trivia found for waypoint '{waypoint_id}'.",
         )
+    # Each waypoint currently has exactly one seeded question.
+    question = questions[0]
 
-    correct_idx = getattr(question, "correctOptionIndex", getattr(question, "answer_index", 0))
-    is_correct = submission.selected_option_index == correct_idx
-    explanation = getattr(question, "explanation", "")
+    is_correct = submission.selected_option_index == question.answer_index
 
     stamp_awarded = None
     if is_correct:
         stamp_awarded = record_stamp(
             session_id=submission.session_id,
-            waypoint_id=question.waypoint_id,
-            waypoint_name=getattr(question, "waypointName", getattr(question, "title", waypoint_id)),
-            badge_icon=getattr(question, "badgeIcon", "stamp-default"),
+            waypoint_id=waypoint.id,
+            waypoint_name=waypoint.properties.name,
+            badge_icon=waypoint.properties.passport_stamp_id,
         )
 
     return AnswerResult(
         correct=is_correct,
-        correctOptionIndex=correct_idx,
-        explanation=explanation,
-        stampAwarded=stamp_awarded,
-    )
+        correct_option_index=question.answer_index,
+        explanation=question.explanation,
+        stamp_awarded=stamp_awarded,
+    )
