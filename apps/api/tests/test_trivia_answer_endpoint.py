@@ -100,7 +100,7 @@ def test_rate_limit_exceeded_response_has_retry_after_header():
         KIMBERLEY_ANSWER_URL, json=_payload(session_id, 99), headers=headers
     )
     assert blocked.status_code == 429
-    header_names = {name.lower() for name in blocked.headers.keys()}
+    header_names = {name.lower() for name in blocked.headers}
     assert "retry-after" in header_names
 
 
