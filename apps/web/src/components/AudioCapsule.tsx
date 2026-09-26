@@ -14,6 +14,8 @@ export interface AudioCapsuleProps {
   className?: string;
 }
 
+const AUDIO_COMING_SOON_MESSAGE = "Audio coming soon. This station's recording isn't available yet.";
+
 export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
   audioCapsuleId,
   audioUrl,
@@ -26,6 +28,7 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isAudioLoaded, setIsAudioLoaded] = useState<boolean>(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -35,6 +38,13 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+
+  useEffect(() => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setIsAudioLoaded(false);
+    setAudioError(null);
+  }, [audioUrl]);
 
   const setupWebAudio = () => {
     if (audioContextRef.current || !audioRef.current) return;
@@ -116,6 +126,7 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
         setIsPlaying(true);
       } catch {
         setIsPlaying(false);
+        setAudioError('Audio could not be played on this device.');
       }
     }
   };
@@ -160,8 +171,19 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
           ref={audioRef}
           src={audioUrl}
           preload="auto"
-          onCanPlay={() => setIsAudioLoaded(true)}
-          onLoadedMetadata={() => setIsAudioLoaded(true)}
+          onCanPlay={() => {
+            setAudioError(null);
+            setIsAudioLoaded(true);
+          }}
+          onLoadedMetadata={() => {
+            setAudioError(null);
+            setIsAudioLoaded(true);
+          }}
+          onError={() => {
+            setIsAudioLoaded(false);
+            setIsPlaying(false);
+            setAudioError(AUDIO_COMING_SOON_MESSAGE);
+          }}
           onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
           onEnded={() => {
             setIsPlaying(false);
@@ -213,18 +235,24 @@ export const AudioCapsule: React.FC<AudioCapsuleProps> = ({
           )}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <canvas
-            ref={canvasRef}
-            width={320}
-            height={28}
-            className="w-full h-7 rounded bg-neutral-950/60"
-          />
-          <div className="flex justify-between text-xs font-mono text-neutral-400">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(durationSeconds)}</span>
+        {audioError ? (
+          <p role="status" className="text-sm text-amber-300" data-testid="audio-fallback">
+            {audioError}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <canvas
+              ref={canvasRef}
+              width={320}
+              height={28}
+              className="w-full h-7 rounded bg-neutral-950/60"
+            />
+            <div className="flex justify-between text-xs font-mono text-neutral-400">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(durationSeconds)}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </aside>
   );

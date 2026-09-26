@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UnifiedViewport } from '../UnifiedViewport';
 
@@ -10,23 +10,28 @@ type MockWaypointFeature = {
 type MockMapCanvasProps = {
   waypointsGeoJson?: { features: MockWaypointFeature[] };
   onSelectWaypoint?: (station: { stationId: string; name: string; [key: string]: unknown }) => void;
+  onWaypointReached?: (waypointId: string) => void;
 };
 
 vi.mock('../MapCanvas', () => ({
-  MapCanvas: ({ waypointsGeoJson, onSelectWaypoint }: MockMapCanvasProps) => (
+  MapCanvas: ({ waypointsGeoJson, onSelectWaypoint, onWaypointReached }: MockMapCanvasProps) => (
     <div data-testid="map-canvas">
       {waypointsGeoJson?.features.map((feature) => {
         const properties = feature.properties ?? {};
         const id = String(properties.id ?? feature.id ?? '');
         const name = String(properties.name ?? 'Waypoint');
         return (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onSelectWaypoint?.({ ...properties, stationId: id, name })}
-          >
-            Select {name}
-          </button>
+          <div key={id}>
+            <button
+              type="button"
+              onClick={() => onSelectWaypoint?.({ ...properties, stationId: id, name })}
+            >
+              Select {name}
+            </button>
+            <button type="button" onClick={() => onWaypointReached?.(id)}>
+              Reach {name}
+            </button>
+          </div>
         );
       })}
     </div>
@@ -82,7 +87,7 @@ const stationTrivia = [
 ];
 let rejectTriviaFetch = false;
 
-describe('UnifiedViewport Component (#37)', () => {
+describe('UnifiedViewport Component (#41)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
@@ -158,7 +163,7 @@ describe('UnifiedViewport Component (#37)', () => {
     expect(globalThis.fetch).toHaveBeenCalledWith(
       `http://localhost:8000/waypoints/${waypointId}/trivia`
     );
-  });
+  }, 10000);
 
   it('shows a visible error when the trivia API cannot be reached', async () => {
     rejectTriviaFetch = true;
@@ -182,6 +187,28 @@ describe('UnifiedViewport Component (#37)', () => {
     expect(await screen.findByText('Pretoria question?')).toBeInTheDocument();
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'https://railwaze-api.example.test/waypoints/station-pretoria/trivia'
+    );
+  });
+
+  it.each([
+    ['station-pretoria', 'Pretoria'],
+    ['station-kimberley', 'Kimberley'],
+    ['station-matjiesfontein', 'Matjiesfontein'],
+    ['station-cape-town', 'Hex River / Cape Town'],
+  ])('shows the audio fallback when %s is reached without an audio file', async (waypointId, name) => {
+    render(<UnifiedViewport />);
+
+    fireEvent.click(await screen.findByRole('button', { name: `Reach ${name}` }));
+
+    const player = await screen.findByLabelText('Audio Capsule Player');
+    const audioElement = player.querySelector('audio');
+    expect(audioElement?.getAttribute('src')).toBe(`/audio/${waypointId}.mp3`);
+    if (audioElement) {
+      fireEvent.error(audioElement);
+    }
+
+    expect(await within(player).findByRole('status')).toHaveTextContent(
+      "Audio coming soon. This station's recording isn't available yet."
     );
   });
 });

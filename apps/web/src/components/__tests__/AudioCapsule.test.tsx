@@ -80,4 +80,48 @@ describe('AudioCapsule Component', () => {
     expect(aside.className).toContain('translate-y-24');
     expect(aside.className).toContain('opacity-0');
   });
+
+  it('shows an honest fallback when the audio file cannot be loaded', () => {
+    const { container } = render(
+      <AudioCapsule
+        audioUrl="/audio/station-pretoria.mp3"
+        title="Pretoria Oral History"
+        durationSeconds={135}
+      />
+    );
+
+    const audioElement = container.querySelector('audio');
+    expect(audioElement).not.toBeNull();
+    if (audioElement) {
+      fireEvent.error(audioElement);
+    }
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      "Audio coming soon. This station's recording isn't available yet."
+    );
+    expect(screen.queryByTestId('audio-fallback')).toBeInTheDocument();
+    expect(screen.queryByText('0:00')).not.toBeInTheDocument();
+  });
+
+  it('shows a visible fallback if playback is rejected after loading', async () => {
+    window.HTMLMediaElement.prototype.play = vi.fn().mockRejectedValue(new Error('NotAllowedError'));
+    const { container } = render(
+      <AudioCapsule
+        audioUrl="/audio/station-kimberley.mp3"
+        title="Kimberley Oral History"
+        durationSeconds={135}
+      />
+    );
+    const audioElement = container.querySelector('audio');
+    if (!audioElement) throw new Error('Expected an audio element');
+    act(() => fireEvent.loadedMetadata(audioElement));
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Play' }));
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Audio could not be played on this device.'
+    );
+  });
 });
