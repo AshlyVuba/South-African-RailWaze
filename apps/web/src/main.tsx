@@ -1,7 +1,6 @@
 import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import { UnifiedViewport } from './components/UnifiedViewport';
 
 const rootEl = document.getElementById('root');

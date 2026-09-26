@@ -1,6 +1,5 @@
-
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryVaultSlider } from '../MemoryVaultSlider';
 
 describe('MemoryVaultSlider Visual & Functional Tests', () => {
@@ -17,10 +16,10 @@ describe('MemoryVaultSlider Visual & Functional Tests', () => {
     };
 
     render(
-      <MemoryVaultSlider
-        stationId="kimberley"
-        waypoint={mockWaypoint}
-      />
+        <MemoryVaultSlider
+            stationId="kimberley"
+            waypoint={mockWaypoint}
+        />
     );
 
     const card = screen.getByTestId('memory-vault-card');
@@ -42,10 +41,10 @@ describe('MemoryVaultSlider Visual & Functional Tests', () => {
   it('triggers onClose callback when close button is clicked', () => {
     const handleClose = vi.fn();
     render(
-      <MemoryVaultSlider
-        stationId="matjiesfontein"
-        onClose={handleClose}
-      />
+        <MemoryVaultSlider
+            stationId="matjiesfontein"
+            onClose={handleClose}
+        />
     );
 
     const closeBtn = screen.getByRole('button', { name: /close vault/i });
@@ -58,7 +57,7 @@ describe('MemoryVaultSlider Visual & Functional Tests', () => {
 
   it('handles pointer drag interactions to update comparison split position', () => {
     const { container } = render(
-      <MemoryVaultSlider stationId="pretoria" />
+        <MemoryVaultSlider stationId="pretoria" />
     );
 
     const sliderContainer = container.querySelector('.cursor-ew-resize');
@@ -82,5 +81,75 @@ describe('MemoryVaultSlider Visual & Functional Tests', () => {
       fireEvent.pointerMove(sliderContainer, { clientX: 300, pointerId: 1 });
       fireEvent.pointerUp(sliderContainer, { clientX: 300, pointerId: 1 });
     }
+  });
+
+  describe('trivia option quantum shuffle (Issue #39)', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    const triviaQuestion = {
+      id: 'trivia-kimberley-bighole',
+      waypoint_id: 'wp-kimberley',
+      question: 'What primary geological feature defined Kimberley?',
+      options: ['The Big Hole', 'Cullinan Pipe', 'Pilgrims Rest', 'Sudwala Caves'],
+    };
+
+    it('renders all options and a "quantum-shuffled" badge on a successful QRNG call', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ type: 'uint8', length: 3, data: [200, 10, 90], success: true }),
+      } as Response);
+
+      render(
+          <MemoryVaultSlider
+              stationId="kimberley"
+              triviaQuestion={triviaQuestion}
+              onTriviaRequest={() => {}}
+              waypoint={{ id: 'wp-kimberley', name: 'Kimberley' }}
+          />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/quantum-shuffled/i)).toBeInTheDocument();
+      });
+
+      for (const option of triviaQuestion.options) {
+        expect(screen.getByText(option)).toBeInTheDocument();
+      }
+    });
+
+    it('falls back to a classical shuffle without throwing when the QRNG API is unreachable', async () => {
+      globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+
+      render(
+          <MemoryVaultSlider
+              stationId="kimberley"
+              triviaQuestion={triviaQuestion}
+              onTriviaRequest={() => {}}
+              waypoint={{ id: 'wp-kimberley', name: 'Kimberley' }}
+          />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/classical shuffle/i)).toBeInTheDocument();
+      });
+
+      // All options still rendered - the UI never blocked or errored.
+      for (const option of triviaQuestion.options) {
+        expect(screen.getByText(option)).toBeInTheDocument();
+      }
+    });
+
+    it('renders nothing extra when there is no trivia question yet', () => {
+      render(
+          <MemoryVaultSlider
+              stationId="kimberley"
+              waypoint={{ id: 'wp-kimberley', name: 'Kimberley' }}
+          />
+      );
+
+      expect(screen.queryByText(/quantum-shuffled|classical shuffle/i)).not.toBeInTheDocument();
+    });
   });
 });
