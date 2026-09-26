@@ -33,9 +33,9 @@ const ASSET_PATHS = [
     '/data/route.geojson',
     '/data/waypoints.geojson',
     '/data/memory-vault.json',
-    // Add real station Memory Vault image / Audio Capsule audio paths here
-    // once the content pipeline produces them (see docs/DECISIONS.md) -
-    // they need to be added here AND to STATION_MEDIA_ASSETS in sw.js.
+    '/images/stations/matjiesfontein-then.jpg',
+    '/images/stations/matjiesfontein-now.jpg',
+    '/audio/audio-matjiesfontein.mp3',
 ];
 
 const manifest = {};

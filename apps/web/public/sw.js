@@ -39,6 +39,9 @@ const STATIC_INTEGRITY_ASSETS = [
     '/data/route.geojson',
     '/data/waypoints.geojson',
     '/data/memory-vault.json',
+    '/images/stations/matjiesfontein-then.jpg',
+    '/images/stations/matjiesfontein-now.jpg',
+    '/audio/audio-matjiesfontein.mp3',
 ];
 
 async function sha256Hex(arrayBuffer) {
@@ -109,7 +112,11 @@ function contentUnavailableResponse(pathname) {
 // Once real files land under /media/memory-vault/<station>.jpg and
 // /media/audio/<station>.mp3 (or wherever the content pipeline puts them),
 // add their URLs here.
-const STATION_MEDIA_ASSETS = [];
+const STATION_MEDIA_ASSETS = [
+    '/images/stations/matjiesfontein-then.jpg',
+    '/images/stations/matjiesfontein-now.jpg',
+    '/audio/audio-matjiesfontein.mp3',
+];
 
 // --- Map tiles: a real, install-time-safe slice of the actual corridor. --
 // Mirrors apps/web/src/lib/tileMath.ts (see comment above).
