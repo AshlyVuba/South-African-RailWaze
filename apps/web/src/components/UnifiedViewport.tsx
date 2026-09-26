@@ -10,6 +10,8 @@ const EMPTY_FEATURE_COLLECTION: FeatureCollection = {
   type: 'FeatureCollection',
   features: [],
 };
+const getApiBaseUrl = () =>
+  (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
 interface MemoryVaultCaption {
   waypoint_id: string;
@@ -132,7 +134,7 @@ export const UnifiedViewport: React.FC = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/waypoints/${encodeURIComponent(waypointId)}/trivia`
+        `${getApiBaseUrl()}/waypoints/${encodeURIComponent(waypointId)}/trivia`
       );
       if (!response.ok) {
         throw new Error(`Trivia request failed (${response.status}).`);
@@ -145,7 +147,10 @@ export const UnifiedViewport: React.FC = () => {
       }
       setTriviaQuestion(question);
     } catch (error) {
-      setTriviaError(error instanceof Error ? error.message : 'Unable to load station trivia.');
+      const message = error instanceof Error && error.message.startsWith('Trivia request failed')
+        ? error.message
+        : 'Unable to load station trivia. Check the API URL and your connection.';
+      setTriviaError(message);
     } finally {
       setTriviaLoading(false);
     }
