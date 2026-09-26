@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { queuedRequest, flushQueue } from '../lib/offlineQueue';
+import { verifyPassportSignature, type PqcVerificationStatus } from '../lib/pqcSignature';
 
 export type TravelerRank = 'Stoker' | 'Track Master' | 'Karoo Scout' | 'Rail Legend';
 
@@ -34,6 +35,7 @@ export const PassportModal = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isQueued, setIsQueued] = useState<boolean>(false);
+  const [pqcStatus, setPqcStatus] = useState<PqcVerificationStatus>('unavailable');
 
   const fetchPassport = useCallback(async () => {
     if (!sessionId) return;
@@ -88,6 +90,34 @@ export const PassportModal = ({
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
   }, [isQueued, fetchPassport]);
+
+  // Post-quantum (ML-DSA) tamper-evidence check on whatever passport is
+  // currently displayed. Purely additive: verification never blocks or
+  // delays showing the passport itself, it only controls a small badge.
+  // Raw JSON from the API uses camelCase field names (sessionId,
+  // currentRank, totalScore, collectedStamps[].stampId, signature) - see
+  // the comment on SignablePassportPayload in lib/pqcSignature.ts for why
+  // that differs from this file's own PassportState interface above.
+  useEffect(() => {
+    if (!passport) {
+      setPqcStatus('unavailable');
+      return;
+    }
+    const raw = passport as unknown as {
+      sessionId: string;
+      currentRank: string;
+      totalScore: number;
+      collectedStamps: Array<{ stampId: string }>;
+      signature?: string | null;
+    };
+    let cancelled = false;
+    verifyPassportSignature(raw).then((status: PqcVerificationStatus) => {
+      if (!cancelled) setPqcStatus(status);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [passport]);
 
   if (!isOpen) return null;
 
@@ -156,6 +186,15 @@ export const PassportModal = ({
                   <span className="block text-xs font-mono text-neutral-400 mt-1">
                 Score: {passport.score} pts
               </span>
+                  {pqcStatus === 'verified' ? (
+                      <span className="block text-[10px] font-mono text-emerald-400 mt-1.5">
+                        ✓ PQC-verified (ML-DSA)
+                      </span>
+                  ) : (
+                      <span className="block text-[10px] font-mono text-neutral-500 mt-1.5">
+                        ⚠ signature unavailable
+                      </span>
+                  )}
                 </div>
 
                 {/* Collected Stamps */}

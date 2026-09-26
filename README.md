@@ -33,7 +33,9 @@ Domestic rail tourists, backpackers, scenic travelers, and school groups riding 
 | Geofenced audio capsules | 45–60 second localized folklore and history clips that trigger automatically at waypoints |
 | Memory vault ("then vs. now") | Interactive slider comparing historical station photography (1880s–1950s) with modern views |
 | Trans-Karoo passport | Station micro-trivia that awards collectible digital stamps and traveler rank (Stoker → Rail Legend) |
-| Offline-first PWA | Full service-worker caching of map tiles and audio so the experience survives Karoo dead zones |
+| ⚛ Quantum-shuffled trivia | Trivia answer order is shuffled using live true-random bytes from the ANU Quantum Random Number Generator, with an on-screen indicator so the quantum call is visibly verifiable on camera |
+| 🔏 Post-quantum passport signatures | Each passport response carries an ML-DSA (FIPS 204) signature, verified client-side before showing a "✓ PQC-verified" badge — a second, independent quantum-tech contribution alongside the QRNG shuffle |
+| Offline-first PWA | Service-worker caching of app-shell assets and a demo-safe slice of map tiles, with SHA-256 integrity checks on cached data; audio/photo precaching is planned once real media assets exist |
 
 ## MVP route anchor waypoints
 
@@ -44,20 +46,40 @@ Domestic rail tourists, backpackers, scenic travelers, and school groups riding 
 
 ## Tech stack
 
-- **Mapping / 3D:** MapLibre GL JS, RGB terrain elevation tiles, GeoJSON route paths
-- **Frontend:** React / Next.js, Tailwind CSS, Framer Motion
-- **Audio:** HTML5 Web Audio API with a custom drag-slider for the photo comparison module
-- **Backend:** Python FastAPI serving GeoJSON waypoints and trivia state, Pydantic-validated
-- **Data:** SQLite / PostGIS-compatible coordinates
-- **Offline:** Service workers pre-caching audio, map tiles, and images
-- **Quantum:** ANU Quantum Random Numbers Server for true quantum-sourced randomness (vacuum-fluctuation measurement, not a classical PRNG) shuffling trivia answer-option display order, with an automatic classical (Math.random()) fallback
+- **Mapping / 3D:** MapLibre GL JS, RGB terrain elevation tiles, GeoJSON route paths, Turf.js for train-position interpolation along the route
+- **Frontend:** React 18 + TypeScript, built with Vite, styled with Tailwind CSS
+- **Audio:** HTML5 Web Audio API (canvas waveform visualizer) with a custom drag-slider for the photo comparison module
+- **Randomness:** ANU Quantum Random Number Generator API for live quantum-seeded shuffling of trivia answer order, with a tested classical fallback
+- **Post-quantum cryptography:** ML-DSA (Dilithium, NIST FIPS 204) signatures over each passport response — `dilithium-py` (backend) signs, `@noble/post-quantum` (frontend) verifies against a bundled public key, with a tested graceful fallback if unavailable
+- **Backend:** Python FastAPI serving GeoJSON waypoints and trivia state, Pydantic v2-validated, rate-limited with slowapi
+- **Data:** GeoJSON + JSON Schema/OpenAPI contracts as the source of truth; an in-memory per-session store for passport/trivia progression (no database yet — planned before a production deployment)
+- **Offline:** A hand-written service worker pre-caching a narrow, demo-safe slice of map tiles, plus app-shell assets, backed by a generated SHA-256 integrity manifest to detect tampering on cache reads
+
+## Quantum tech integration
+
+South African RailWaze's bonus quantum-tech contribution is a genuine, live integration — not a simulated or named-only reference:
+
+- **Live entropy source:** `quantumShuffle()` (`apps/web/src/lib/quantumRandom.ts`) calls the [ANU Quantum Random Number Generator API](https://qrng.anu.edu.au/) to fetch true-random bytes, then runs a Fisher–Yates shuffle over the displayed trivia answer options using that quantum entropy.
+- **Demoable on camera:** the trivia card shows a live "⚛ Quantum-shuffled (ANU QRNG, live)" indicator when the call succeeds, so the integration is visibly verifiable during the pitch rather than only narrated.
+- **Graceful, tested fallback:** any QRNG failure (offline, rate-limited, malformed response) is caught inside `quantumShuffle()` itself and silently substitutes `Math.random()` — it never throws or blocks the UI. This is covered by dedicated tests simulating a rejected fetch, a 429 response, and a malformed payload (`lib/__tests__/quantumRandom.test.ts`).
+- **Honest scope:** each shuffled item still carries its original server-assigned index, so the integration is ready to seed answer-submission logic once that flow is built, rather than being cosmetic-only.
+
+### Post-quantum signature verification (passport stamps)
+
+A second, independent quantum-tech contribution, scoped narrowly so it doesn't touch scoring, transport security, or the existing passport contract:
+
+- **Real, standardized algorithm, not hand-rolled crypto:** ML-DSA (Dilithium, NIST FIPS 204). The backend (`apps/api/app/security/pqc.py`) signs with [`dilithium-py`](https://pypi.org/project/dilithium-py/) (a pure-Python implementation that passes the official FIPS 204 KAT test vectors); the frontend (`apps/web/src/lib/pqcVerify.ts`) verifies with [`@noble/post-quantum`](https://www.npmjs.com/package/@noble/post-quantum) — two independent implementations of the same NIST standard, not one library trusting itself.
+- **Additive, not breaking:** `GET /passport/{sessionId}` gains one new optional field, `signature` (hex-encoded), over the existing response. Nothing else about the contract, rank/scoring logic, or TLS/transport changes.
+- **Demoable on camera:** the passport modal shows a "✓ PQC-verified (ML-DSA)" badge when the signature checks out client-side, or "⚠ signature unavailable" otherwise — mirroring the QRNG badge pattern so both quantum-tech contributions are visibly verifiable, not just narrated.
+- **Graceful, tested fallback:** a missing signature, an unbundled public key, malformed hex, or a genuinely invalid/tampered signature all resolve the same way — the passport still renders normally, it just never shows the verified badge. Covered by tests on both sides, including a simulated tampered-payload case.
+- **Setup required before demo day:** run `python apps/api/scripts/generate_pqc_keypair.py` once, put the secret key in `apps/api/.env`, and paste the public key into `apps/web/src/lib/pqcPublicKey.ts`. Without this the app still works fine — the badge just stays off, since an unset key is a deliberate fail-safe default, not a bug.
 
 ## Security (SSDLC)
 
-- **Threat modelling (STRIDE):** GPS spoofing mitigated via sequential path-progress validation rather than simple radius checks; local cache integrity protected with SHA-256 manifests; traveler rank validated server-side, never trusted from the client.
-- **Secure coding:** Strict Pydantic request validation in FastAPI, dependency scanning (SCA), secrets kept out of source control.
-- **Testing:** SAST/DAST on the codebase, rate limiting on trivia endpoints (`slowapi`) against bot abuse, and offline cache integrity checks under simulated network failure.
-- **Deployment:** Pre-deployment vulnerability scans, structured logging for anomaly detection, and a rollback plan for live-demo failure modes.
+- **Threat modelling (STRIDE):** GPS spoofing mitigated via sequential path-progress validation rather than simple radius checks; local cache integrity protected with SHA-256 manifests; traveler rank validated server-side, never trusted from the client; passport responses carry an ML-DSA (FIPS 204) signature as a tamper-evidence layer, verified client-side.
+- **Secure coding:** Strict Pydantic request validation in FastAPI (`extra="forbid"` on submission schemas), secrets kept out of source control.
+- **Testing:** Backend pytest suite covering rate-limit rejection (HTTP 429), schema validation, and dedicated tests that a client-forged rank or stamp is always rejected server-side; ruff linting and ESLint enforced in CI. Automated dependency/static-analysis scanning (SCA/SAST) is not yet wired into CI — planned before final submission.
+- **Deployment:** A rollback plan for live-demo failure modes; structured anomaly logging is planned but not yet implemented.
 
 ## Sprint roadmap
 
@@ -74,53 +96,46 @@ Domestic rail tourists, backpackers, scenic travelers, and school groups riding 
 ```
 south-african-railwaze/
 ├── apps/
-│   ├── web/                       # React/Next.js PWA (frontend)
+│   ├── web/                        # React + Vite PWA (frontend)
 │   │   ├── public/
-│   │   │   ├── icons/
-│   │   │   └── manifest.json
+│   │   │   ├── data/                # runtime copy of route/waypoint GeoJSON
+│   │   │   ├── manifest.json
+│   │   │   └── sw.js                # service worker (registered from here, not a top-level folder)
+│   │   ├── scripts/
+│   │   │   └── generate-integrity-manifest.mjs
 │   │   ├── src/
-│   │   │   ├── components/
-│   │   │   │   ├── map/           # MapLibre canvas, train marker
-│   │   │   │   ├── audio-capsule/
-│   │   │   │   ├── memory-vault/  # "then vs. now" slider
-│   │   │   │   └── passport/
-│   │   │   ├── hooks/
-│   │   │   ├── lib/
-│   │   │   ├── styles/
-│   │   │   ├── app/                # or pages/, depending on Next.js router choice
-│   │   │   └── types/
-│   │   ├── service-worker/
+│   │   │   ├── components/          # MapCanvas, AudioCapsule, MemoryVaultSlider, PassportModal, UnifiedViewport, ConnectivityBanner
+│   │   │   ├── lib/                 # connectivity, offlineQueue, integrity, tileMath, quantumRandom, pqcVerify, pqcPublicKey, designTokens
+│   │   │   └── main.tsx
 │   │   └── package.json
-│   └── api/                       # FastAPI backend
+│   └── api/                        # FastAPI backend
 │       ├── app/
-│       │   ├── routers/
-│       │   ├── schemas/           # Pydantic models (mirror contracts/)
-│       │   ├── models/
-│       │   ├── services/
-│       │   ├── security/
+│       │   ├── routers/             # waypoints, trivia, passport
+│       │   ├── schemas/             # Pydantic models (mirror contracts/)
+│       │   ├── db/                  # in-memory session store + seed data
+│       │   ├── middleware/          # error handlers
+│       │   ├── security/            # pqc.py - ML-DSA passport signing
+│       │   ├── rate_limit.py
 │       │   └── main.py
+│       ├── scripts/
+│       │   └── generate_pqc_keypair.py
 │       ├── tests/
+│       ├── .env.example
 │       └── requirements.txt
 ├── data/
-│   ├── geojson/                   # route.geojson, waypoints.geojson
-│   ├── media/
-│   │   ├── audio/
-│   │   └── photos/then-now/
-│   └── trivia/
-├── contracts/                     # frozen data-shape source of truth
+│   └── geojson/                    # route.geojson, waypoints.geojson (source of truth; copied into apps/web/public/data/ for runtime use)
+├── contracts/                      # frozen data-shape source of truth
 │   ├── waypoint.schema.json
 │   ├── trivia-passport.schema.json
 │   └── api-openapi.yaml
 ├── docs/
-│   ├── AI_GUARDRAILS.md
-│   ├── CONVENTIONS.md
-│   ├── DECISIONS.md
-│   └── ARCHITECTURE.md
+│   └── DECISIONS.md                # architectural decision log
 ├── .github/
-│   └── ISSUE_TEMPLATE/
-├── .env.example
+│   └── workflows/ci.yml
 └── README.md
 ```
+
+> Note: `data/geojson/` and `apps/web/public/data/` are currently two copies of the same files — a known duplication flagged in `docs/DECISIONS.md`, to be resolved with a build step before Iteration 4.
 
 ## Team composition
 
@@ -128,11 +143,11 @@ TheLastCodeBenders —  working across an "Avatar" thematic role split:
 
 | Member | Role | Domain |
 |---|---|---|
-| Ntsika Gajula | Waterbender | Full-stack engineering & 3D mapping (React, MapLibre) |
-| Tshepang Mogane | Firebender | Backend & security engineering (FastAPI, SSDLC) |
-| Keamogetswe Mokoena | Earthbender | Product strategy & go-to-market |
-| Aphiwe Vuba | Airbender | Cultural research & storytelling |
-| Lauren Steenkamp | The Avatar | Systems integration & offline data |
+| Ntsika Gajula | Waterbender | Frontend & PWA — frontend PWA development, Tailwind CSS styling, responsive mobile layouts, the unified single-canvas viewport interface |
+| Tshepang Mogane | Firebender | Backend & API security — FastAPI backend architecture, Pydantic validation schemas, trivia state endpoints, server-side path-progress validation |
+| Keamogetswe Mokoena | Earthbender | Geospatial & 3D visualization — MapLibre GL JS 3D elevation rendering, GeoJSON coordinate pipelines, spatial camera animation, train marker tracking |
+| Aphiwe Vuba | Airbender | Offline-first & security architecture — service-worker caching, SHA-256 asset manifest verification, rate limiting (slowapi), vulnerability scanning |
+| Lauren Steenkamp | The Avatar | Product strategy & content — UI/UX wireframing, the Memory Vault photo-comparison slider, gamified passport UI, pitch deck storytelling |
 
 ## How to run our code
 

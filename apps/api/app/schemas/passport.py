@@ -64,14 +64,23 @@ class PassportState(BaseModel):
     completed_trivia_ids: list[str] = Field(
         default_factory=list, alias="completedTriviaIds"
     )
+    signature: str | None = Field(
+        default=None,
+        description=(
+            "Hex-encoded ML-DSA (FIPS 204) signature over a canonical subset "
+            "of this passport's fields, for optional client-side tamper "
+            "verification. Additive field - absent or unverifiable never "
+            "blocks the passport from being read or displayed."
+        ),
+    )
 
     @model_validator(mode="after")
     def sync_compatibility_fields(self):
         if self.rank is None:
             self.rank = self.current_rank
         elif (
-            self.current_rank == TravelerRank.STOKER
-            and self.rank != TravelerRank.STOKER
+                self.current_rank == TravelerRank.STOKER
+                and self.rank != TravelerRank.STOKER
         ):
             self.current_rank = self.rank
 

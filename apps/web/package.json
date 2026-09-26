@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@noble/post-quantum": "^0.7.0",
     "@turf/along": "^6.5.0",
     "@turf/bearing": "^6.5.0",
     "@turf/distance": "^6.5.0",

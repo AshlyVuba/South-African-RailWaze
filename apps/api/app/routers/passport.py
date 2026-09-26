@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.db.session_store import get_passport
 from app.schemas.passport import PassportState
+from app.security.pqc import sign_passport
 
 router = APIRouter(prefix="/passport", tags=["Passport"])
 
@@ -9,7 +10,9 @@ router = APIRouter(prefix="/passport", tags=["Passport"])
 @router.get("/{session_id}", response_model=PassportState)
 def get_user_passport(session_id: str):
 
-    return get_passport(session_id)
+    passport = get_passport(session_id)
+    passport.signature = sign_passport(passport)
+    return passport
 
 
 @router.post(
