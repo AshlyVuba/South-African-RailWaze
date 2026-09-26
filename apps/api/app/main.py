@@ -1,7 +1,13 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+<<<<<<< HEAD
+from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+=======
+from slowapi.errors import RateLimitExceeded
+>>>>>>> f9c814919eb2adee5e37001e0a1178f46ddb540a
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.middleware.error_handler import (
@@ -10,8 +16,14 @@ from app.middleware.error_handler import (
     rate_limit_handler,
     validation_exception_handler,
 )
+<<<<<<< HEAD
+from app.routers import passport, trivia, waypoints
+
+limiter = Limiter(key_func=get_remote_address)
+=======
 from app.rate_limit import limiter
 from app.routers import passport, trivia, waypoints
+>>>>>>> f9c814919eb2adee5e37001e0a1178f46ddb540a
 
 app = FastAPI(
     title="RailWaze API",

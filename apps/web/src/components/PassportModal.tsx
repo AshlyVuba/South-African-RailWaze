@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { queuedRequest, flushQueue } from '../lib/offlineQueue';
 
 export type TravelerRank = 'Stoker' | 'Track Master' | 'Karoo Scout' | 'Rail Legend';
@@ -24,7 +24,7 @@ interface PassportModalProps {
   apiBaseUrl?: string;
 }
 
-export const PassportModal: React.FC<PassportModalProps> = ({
+export const PassportModal = ({
                                                               sessionId,
                                                               isOpen,
                                                               onClose,
@@ -205,4 +205,4 @@ export const PassportModal: React.FC<PassportModalProps> = ({
       </div>
     </div>
   );
-};
+}: PassportModalProps) => {

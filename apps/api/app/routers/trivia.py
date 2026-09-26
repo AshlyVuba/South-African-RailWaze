@@ -12,10 +12,10 @@ router = APIRouter(prefix="/waypoints", tags=["Trivia"])
 @router.post("/{waypoint_id}/trivia/answer", response_model=AnswerResult)
 @limiter.limit("5/minute")
 async def submit_trivia_answer(
-        request: Request,
-        response: Response,
-        waypoint_id: str,
-        submission: AnswerSubmission,
+    request: Request,
+    response: Response,
+    waypoint_id: str,
+    submission: AnswerSubmission,
 ):
     # async def (not def) is required here - see the comment on
     # get_waypoint_trivia in routers/waypoints.py for why.
