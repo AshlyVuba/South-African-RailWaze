@@ -20,10 +20,10 @@ export const ConnectivityBanner: React.FC<ConnectivityBannerProps> = ({ apiBaseU
             role="status"
             aria-live="polite"
             aria-label="Connectivity Status"
-            className={`pointer-events-none inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition-colors ${
+            className={`pointer-events-none inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold shadow-sm backdrop-blur-md bg-neutral-900/95 transition-colors ${
                 isOffline
-                    ? 'border-amber-700/60 bg-amber-950/80 text-amber-300'
-                    : 'border-slate-700/50 bg-slate-900/60 text-emerald-400'
+                    ? 'border-amber-700/60 text-amber-300'
+                    : 'border-slate-700/50 text-emerald-400'
             }`}
         >
       <span

@@ -192,8 +192,6 @@ export const UnifiedViewport: React.FC = () => {
         fontFamily: 'sans-serif',
       }}
     >
-      <ConnectivityBanner />
-
       {/* Real Map Canvas with dynamic route and waypoint layers */}
       <MapCanvas
         onSelectWaypoint={handleWaypointSelect}
@@ -203,7 +201,7 @@ export const UnifiedViewport: React.FC = () => {
         onWaypointReached={handleWaypointReached}
       />
 
-      {/* Top Header Controls */}
+      {/* Top Header Controls (Floating Overlay) */}
       <header
         style={{
           position: 'absolute',
@@ -230,6 +228,10 @@ export const UnifiedViewport: React.FC = () => {
           <span style={{ color: '#FBBF24', fontWeight: 800, fontSize: 13, letterSpacing: 1 }}>
             RAILWAZE 3D
           </span>
+        </div>
+
+        <div style={{ pointerEvents: 'auto' }}>
+          <ConnectivityBanner />
         </div>
 
         <button
