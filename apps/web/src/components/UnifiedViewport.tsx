@@ -5,6 +5,7 @@ import { MemoryVaultSlider, type TriviaQuestion, type WaypointItem } from './Mem
 import { AudioCapsule } from './AudioCapsule';
 import { PassportModal } from './PassportModal';
 import { ConnectivityBanner } from './ConnectivityBanner';
+import { designTokens } from '../lib/designTokens';
 
 const EMPTY_FEATURE_COLLECTION: FeatureCollection = {
   type: 'FeatureCollection',
@@ -187,16 +188,7 @@ export const UnifiedViewport: React.FC = () => {
   );
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100vw',
-        height: '100vh',
-        overflow: 'hidden',
-        backgroundColor: '#060B19',
-        fontFamily: 'sans-serif',
-      }}
-    >
+    <div className={`${designTokens.shell.viewport} relative h-[100dvh] w-full overflow-hidden font-sans`}>
       {/* Real Map Canvas with dynamic route and waypoint layers */}
       <MapCanvas
         onSelectWaypoint={handleWaypointSelect}
@@ -207,52 +199,20 @@ export const UnifiedViewport: React.FC = () => {
       />
 
       {/* Top Header Controls (Floating Overlay) */}
-      <header
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: 12,
-          right: 12,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          zIndex: 10,
-          pointerEvents: 'none',
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: 'rgba(6, 11, 25, 0.85)',
-            backdropFilter: 'blur(8px)',
-            padding: '6px 14px',
-            borderRadius: 8,
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            pointerEvents: 'auto',
-          }}
-        >
-          <span style={{ color: '#FBBF24', fontWeight: 800, fontSize: 13, letterSpacing: 1 }}>
+      <header className="absolute inset-x-3 top-3 z-10 flex items-center justify-between pointer-events-none">
+        <div className={`${designTokens.shell.panel} ${designTokens.containers.compactSheet} pointer-events-auto`}>
+          <span className={`${designTokens.typography.cardHeader} ${designTokens.colors.karooGold}`}>
             RAILWAZE 3D
           </span>
         </div>
 
-        <div style={{ pointerEvents: 'auto' }}>
+        <div className="pointer-events-auto">
           <ConnectivityBanner />
         </div>
 
         <button
           onClick={() => setShowPassport(true)}
-          style={{
-            backgroundColor: '#F59E0B',
-            color: '#060B19',
-            fontWeight: 700,
-            fontSize: 12,
-            border: 'none',
-            borderRadius: 8,
-            padding: '8px 14px',
-            cursor: 'pointer',
-            pointerEvents: 'auto',
-            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.4)',
-          }}
+          className={`${designTokens.elements.fire.button} pointer-events-auto`}
         >
           PASSPORT
         </button>
@@ -260,17 +220,7 @@ export const UnifiedViewport: React.FC = () => {
 
       {/* Memory Vault Card (Overlay Bottom) */}
       {activeWaypoint && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 84,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '92%',
-            maxWidth: 375,
-            zIndex: 15,
-          }}
-        >
+        <div className="absolute bottom-[84px] left-1/2 z-[15] w-[92%] max-w-[375px] -translate-x-1/2">
           <MemoryVaultSlider
             waypoint={activeWaypoint}
             triviaQuestion={triviaQuestion}
@@ -288,33 +238,10 @@ export const UnifiedViewport: React.FC = () => {
 
       {/* Corridor Scrubber Slider */}
       <div
-        style={{
-          position: 'absolute',
-          bottom: 16,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '92%',
-          maxWidth: 375,
-          backgroundColor: 'rgba(6, 11, 25, 0.92)',
-          backdropFilter: 'blur(8px)',
-          borderRadius: 12,
-          padding: '10px 16px',
-          border: '1px solid rgba(245, 158, 11, 0.3)',
-          zIndex: 20,
-          boxSizing: 'border-box',
-        }}
+        data-testid="corridor-progress-panel"
+        className={`absolute bottom-4 left-1/2 z-20 box-border w-[92%] max-w-[375px] -translate-x-1/2 ${designTokens.shell.panel} ${designTokens.containers.card}`}
       >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            color: '#FBBF24',
-            fontSize: 11,
-            fontWeight: 700,
-            marginBottom: 6,
-            fontFamily: 'monospace',
-          }}
-        >
+        <div className={`mb-1.5 flex justify-between font-mono text-xs font-bold ${designTokens.elements.fire.accent}`}>
           <span>PROGRESS</span>
           <span>{Math.round(progress)}%</span>
         </div>
@@ -325,11 +252,7 @@ export const UnifiedViewport: React.FC = () => {
           step="0.1"
           value={progress}
           onChange={(e) => setProgress(parseFloat(e.target.value))}
-          style={{
-            width: '100%',
-            accentColor: '#F59E0B',
-            cursor: 'pointer',
-          }}
+          className={`w-full cursor-pointer ${designTokens.elements.fire.range}`}
         />
       </div>
 
