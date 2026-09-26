@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { quantumShuffle, ShuffledItem, RandomSource } from '../lib/quantumRandom';
+import { designTokens } from '../lib/designTokens';
 
 export interface MemoryVaultData {
   before_image_url?: string;
@@ -209,7 +210,7 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
                     type="button"
                     onClick={onTriviaRequest}
                     disabled={triviaLoading}
-                    className="min-h-10 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-neutral-950 transition-colors hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60"
+                    className={`${designTokens.elements.fire.button} text-sm disabled:cursor-wait disabled:opacity-60`}
                 >
                   {triviaLoading ? 'Loading trivia...' : 'Trivia'}
                 </button>
