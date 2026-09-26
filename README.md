@@ -50,6 +50,7 @@ Domestic rail tourists, backpackers, scenic travelers, and school groups riding 
 - **Backend:** Python FastAPI serving GeoJSON waypoints and trivia state, Pydantic-validated
 - **Data:** SQLite / PostGIS-compatible coordinates
 - **Offline:** Service workers pre-caching audio, map tiles, and images
+- **Quantum:** ANU Quantum Random Numbers Server for true quantum-sourced randomness (vacuum-fluctuation measurement, not a classical PRNG) shuffling trivia answer-option display order, with an automatic classical (Math.random()) fallback
 
 ## Security (SSDLC)
 
@@ -132,6 +133,26 @@ TheLastCodeBenders —  working across an "Avatar" thematic role split:
 | Keamogetswe Mokoena | Earthbender | Product strategy & go-to-market |
 | Aphiwe Vuba | Airbender | Cultural research & storytelling |
 | Lauren Steenkamp | The Avatar | Systems integration & offline data |
+
+## How to run our code
+
+**Backend**
+```
+cd apps\api
+.venv\Scripts\activate
+pip install -r requirements.txt
+ruff check .
+pytest
+```
+
+**Frontend**
+```
+cd apps\web
+npm install
+npm run lint
+npm test
+npm run build
+```
 
 ---
 *#GKHack26*
