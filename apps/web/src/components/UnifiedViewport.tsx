@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { FeatureCollection, LineString, Point } from 'geojson';
+import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
 import { MapCanvas, type WaypointProperties } from './MapCanvas';
-import { MemoryVaultSlider, WaypointItem } from './MemoryVaultSlider';
+import { MemoryVaultSlider, type TriviaQuestion, type WaypointItem } from './MemoryVaultSlider';
 import { AudioCapsule } from './AudioCapsule';
 import { PassportModal } from './PassportModal';
 import { ConnectivityBanner } from './ConnectivityBanner';
@@ -11,6 +11,34 @@ const EMPTY_FEATURE_COLLECTION: FeatureCollection = {
   features: [],
 };
 
+interface MemoryVaultCaption {
+  waypoint_id: string;
+  caption: string;
+}
+
+interface MemoryVaultCatalog {
+  memory_vault_captions: MemoryVaultCaption[];
+}
+
+const toWaypointItem = (
+  feature: Feature<Point>,
+  catalog: MemoryVaultCatalog,
+): WaypointItem => {
+  const properties = feature.properties ?? {};
+  const id = String(properties.id ?? feature.id ?? '');
+  const name = typeof properties.name === 'string' ? properties.name : 'Waypoint';
+  const caption = catalog.memory_vault_captions.find((item) => item.waypoint_id === id)?.caption;
+
+  return {
+    id,
+    name,
+    km_mark: typeof properties.km_mark === 'number' ? properties.km_mark : undefined,
+    memory_vault: {
+      caption: caption ?? `Historical archival perspective for ${name}.`,
+    },
+  };
+};
+
 export const UnifiedViewport: React.FC = () => {
   const [routeGeoJson, setRouteGeoJson] = useState<FeatureCollection<LineString>>(
     EMPTY_FEATURE_COLLECTION as FeatureCollection<LineString>
@@ -18,8 +46,14 @@ export const UnifiedViewport: React.FC = () => {
   const [waypointsGeoJson, setWaypointsGeoJson] = useState<FeatureCollection<Point>>(
     EMPTY_FEATURE_COLLECTION as FeatureCollection<Point>
   );
+  const [memoryVaultCatalog, setMemoryVaultCatalog] = useState<MemoryVaultCatalog>({
+    memory_vault_captions: [],
+  });
   const [progress, setProgress] = useState<number>(0);
   const [activeWaypoint, setActiveWaypoint] = useState<WaypointItem | null>(null);
+  const [triviaQuestion, setTriviaQuestion] = useState<TriviaQuestion | null>(null);
+  const [triviaLoading, setTriviaLoading] = useState<boolean>(false);
+  const [triviaError, setTriviaError] = useState<string | null>(null);
   const [showPassport, setShowPassport] = useState<boolean>(false);
   const [activeAudio, setActiveAudio] = useState<{
     isOpen: boolean;
@@ -34,13 +68,18 @@ export const UnifiedViewport: React.FC = () => {
   const sessionId = 'transkaroo-session-01';
 
   const handleWaypointSelect = useCallback((station: WaypointProperties) => {
-    setActiveWaypoint({
-      id: station.stationId,
-      name: station.name,
-      km_mark: typeof station.km_mark === 'number' ? station.km_mark : undefined,
-      memory_vault: station.memory_vault as WaypointItem['memory_vault'],
-    });
-  }, []);
+    const feature = waypointsGeoJson.features.find(
+      (item) => String(item.properties?.id ?? item.id ?? '') === station.stationId
+    );
+
+    if (!feature) {
+      return;
+    }
+
+    setActiveWaypoint(toWaypointItem(feature, memoryVaultCatalog));
+    setTriviaQuestion(null);
+    setTriviaError(null);
+  }, [memoryVaultCatalog, waypointsGeoJson]);
 
   // DoD 1: Fetch real route and waypoint datasets on mount
   useEffect(() => {
@@ -48,29 +87,25 @@ export const UnifiedViewport: React.FC = () => {
 
     async function loadCorridorData() {
       try {
-        const [routeRes, waypointsRes] = await Promise.all([
+        const [routeRes, waypointsRes, memoryVaultRes] = await Promise.all([
           fetch('/data/route.geojson'),
           fetch('/data/waypoints.geojson'),
+          fetch('/data/memory-vault.json'),
         ]);
 
         if (routeRes.ok && waypointsRes.ok) {
-          const routeData = await routeRes.json();
-          const waypointsData = await waypointsRes.json();
+          const [routeData, waypointsData] = await Promise.all([
+            routeRes.json(),
+            waypointsRes.json(),
+          ]);
+          const catalog: MemoryVaultCatalog = memoryVaultRes.ok
+            ? await memoryVaultRes.json()
+            : { memory_vault_captions: [] };
 
           if (isMounted) {
             setRouteGeoJson(routeData);
             setWaypointsGeoJson(waypointsData);
-
-            // Set initial active waypoint if features exist
-            if (waypointsData.features && waypointsData.features.length > 0) {
-              const firstFeature = waypointsData.features[0];
-              setActiveWaypoint({
-                id: firstFeature.properties?.id || firstFeature.id,
-                name: firstFeature.properties?.name,
-                km_mark: firstFeature.properties?.km_mark,
-                memory_vault: firstFeature.properties?.memory_vault,
-              });
-            }
+            setMemoryVaultCatalog(catalog);
           }
         }
       } catch (err) {
@@ -85,6 +120,37 @@ export const UnifiedViewport: React.FC = () => {
     };
   }, []);
 
+  const handleTriviaRequest = useCallback(async () => {
+    const waypointId = activeWaypoint?.id;
+    if (!waypointId) {
+      return;
+    }
+
+    setTriviaLoading(true);
+    setTriviaError(null);
+    setTriviaQuestion(null);
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/waypoints/${encodeURIComponent(waypointId)}/trivia`
+      );
+      if (!response.ok) {
+        throw new Error(`Trivia request failed (${response.status}).`);
+      }
+
+      const questions = await response.json() as TriviaQuestion[];
+      const question = questions.find((item) => item.waypoint_id === waypointId);
+      if (!question) {
+        throw new Error('No trivia question is available for this station.');
+      }
+      setTriviaQuestion(question);
+    } catch (error) {
+      setTriviaError(error instanceof Error ? error.message : 'Unable to load station trivia.');
+    } finally {
+      setTriviaLoading(false);
+    }
+  }, [activeWaypoint?.id]);
+
   // Issue #20 DoD: Geofence trigger to auto-open matching Audio Capsule once
   const handleWaypointReached = useCallback(
     (waypointId: string) => {
@@ -96,12 +162,7 @@ export const UnifiedViewport: React.FC = () => {
 
       if (!matchedFeature) return;
 
-      const matchedWaypoint: WaypointItem = {
-        id: matchedFeature.properties?.id || matchedFeature.id,
-        name: matchedFeature.properties?.name,
-        km_mark: matchedFeature.properties?.km_mark,
-        memory_vault: matchedFeature.properties?.memory_vault,
-      };
+      const matchedWaypoint = toWaypointItem(matchedFeature, memoryVaultCatalog);
 
       setActiveWaypoint(matchedWaypoint);
 
@@ -117,7 +178,7 @@ export const UnifiedViewport: React.FC = () => {
         });
       }
     },
-    [waypointsGeoJson]
+    [memoryVaultCatalog, waypointsGeoJson]
   );
 
   return (
@@ -131,8 +192,6 @@ export const UnifiedViewport: React.FC = () => {
         fontFamily: 'sans-serif',
       }}
     >
-      <ConnectivityBanner />
-
       {/* Real Map Canvas with dynamic route and waypoint layers */}
       <MapCanvas
         onSelectWaypoint={handleWaypointSelect}
@@ -142,7 +201,7 @@ export const UnifiedViewport: React.FC = () => {
         onWaypointReached={handleWaypointReached}
       />
 
-      {/* Top Header Controls */}
+      {/* Top Header Controls (Floating Overlay) */}
       <header
         style={{
           position: 'absolute',
@@ -171,6 +230,10 @@ export const UnifiedViewport: React.FC = () => {
           </span>
         </div>
 
+        <div style={{ pointerEvents: 'auto' }}>
+          <ConnectivityBanner />
+        </div>
+
         <button
           onClick={() => setShowPassport(true)}
           style={{
@@ -191,19 +254,32 @@ export const UnifiedViewport: React.FC = () => {
       </header>
 
       {/* Memory Vault Card (Overlay Bottom) */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 84,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '92%',
-          maxWidth: 375,
-          zIndex: 15,
-        }}
-      >
-        <MemoryVaultSlider waypoint={activeWaypoint} />
-      </div>
+      {activeWaypoint && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 84,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '92%',
+            maxWidth: 375,
+            zIndex: 15,
+          }}
+        >
+          <MemoryVaultSlider
+            waypoint={activeWaypoint}
+            triviaQuestion={triviaQuestion}
+            triviaLoading={triviaLoading}
+            triviaError={triviaError}
+            onTriviaRequest={handleTriviaRequest}
+            onClose={() => {
+              setActiveWaypoint(null);
+              setTriviaQuestion(null);
+              setTriviaError(null);
+            }}
+          />
+        </div>
+      )}
 
       {/* Corridor Scrubber Slider */}
       <div

@@ -16,9 +16,20 @@ export interface WaypointItem {
   memory_vault?: MemoryVaultData;
 }
 
+export interface TriviaQuestion {
+  id: string;
+  waypoint_id: string;
+  question: string;
+  options: string[];
+}
+
 export interface MemoryVaultSliderProps {
   stationId?: string;
   waypoint?: WaypointItem | null;
+  triviaQuestion?: TriviaQuestion | null;
+  triviaLoading?: boolean;
+  triviaError?: string | null;
+  onTriviaRequest?: () => void;
   onClose?: () => void;
   className?: string;
   style?: React.CSSProperties;
@@ -27,6 +38,10 @@ export interface MemoryVaultSliderProps {
 export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
   stationId,
   waypoint,
+  triviaQuestion = null,
+  triviaLoading = false,
+  triviaError = null,
+  onTriviaRequest,
   onClose,
   className = '',
   style,
@@ -157,6 +172,27 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
         <p className="text-sm text-neutral-300 leading-relaxed m-0">
           {caption}
         </p>
+        {onTriviaRequest && waypoint?.id && (
+          <div className="mt-3 border-t border-white/10 pt-3">
+            <button
+              type="button"
+              onClick={onTriviaRequest}
+              disabled={triviaLoading}
+              className="min-h-10 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-neutral-950 transition-colors hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60"
+            >
+              {triviaLoading ? 'Loading trivia...' : 'Trivia'}
+            </button>
+            {triviaError && <p role="alert" className="mt-3 text-sm text-rose-300">{triviaError}</p>}
+            {triviaQuestion && (
+              <div aria-live="polite" className="mt-3">
+                <p className="text-sm font-semibold text-neutral-100">{triviaQuestion.question}</p>
+                <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-neutral-300">
+                  {triviaQuestion.options.map((option) => <li key={option}>{option}</li>)}
+                </ol>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
