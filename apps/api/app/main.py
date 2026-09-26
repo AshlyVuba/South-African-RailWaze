@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,12 +30,25 @@ app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
-# Configure CORS
+# Configure CORS.
+# The API is stateless (no cookies, no Authorization header consumed by any
+# route), so allow_credentials is intentionally left False. Combining
+# allow_origins=["*"] with allow_credentials=True is also invalid per the
+# Fetch/CORS spec (browsers refuse to honour it), so that pairing must never
+# come back even if credentialed endpoints are added later - add explicit
+# origins to ALLOWED_ORIGINS instead of re-widening this.
+_default_origins = "http://localhost:5173,http://127.0.0.1:5173"
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", _default_origins).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=allowed_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
