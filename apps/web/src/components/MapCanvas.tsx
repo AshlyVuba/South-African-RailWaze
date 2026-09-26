@@ -1,33 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, type CSSProperties, type FC, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
 import type { FeatureCollection, LineString, Point } from 'geojson';
-
-// MapLibre is provided by the app runtime, but the package may not be installed in all
-// environments during local type-checks. Declaring the module here keeps the component
-// type-safe without hard failing editor diagnostics when the dependency is absent.
-declare module 'maplibre-gl' {
-  export class Map {
-    constructor(...args: any[]);
-    on(...args: any[]): void;
-    addSource(...args: any[]): void;
-    addLayer(...args: any[]): void;
-    fitBounds(...args: any[]): void;
-    easeTo(...args: any[]): void;
-    getCanvas(): HTMLCanvasElement;
-    remove(): void;
-  }
-
-  export class Marker {
-    constructor(...args: any[]);
-    setLngLat(...args: any[]): Marker;
-    setRotation(...args: any[]): Marker;
-    addTo(...args: any[]): Marker;
-    remove(): void;
-  }
-
-  const maplibregl: { Map: typeof Map; Marker: typeof Marker };
-  export default maplibregl;
-}
-
 import maplibregl, { Map, Marker } from 'maplibre-gl';
 import length from '@turf/length';
 import along from '@turf/along';
@@ -104,11 +76,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
     const [firstLng, firstLat] = coordinates[0];
     return coordinates.slice(1).reduce(
-      (bounds, [lng, lat]) => [
-        [Math.min(bounds[0][0], lng), Math.min(bounds[0][1], lat)],
-        [Math.max(bounds[1][0], lng), Math.max(bounds[1][1], lat)],
-      ],
-      [[firstLng, firstLat], [firstLng, firstLat]] as [[number, number], [number, number]],
+        (bounds, [lng, lat]) => [
+          [Math.min(bounds[0][0], lng), Math.min(bounds[0][1], lat)],
+          [Math.max(bounds[1][0], lng), Math.max(bounds[1][1], lat)],
+        ],
+        [[firstLng, firstLat], [firstLng, firstLat]] as [[number, number], [number, number]],
     );
   }, [lineFeature, waypointsGeoJson]);
 
