@@ -252,63 +252,7 @@ export const UnifiedViewport: React.FC = () => {
         />
       </div>
 
-<<<<<<< HEAD
-      <div className="absolute top-2 right-2 z-40 pt-safe pr-safe">
-        <ConnectivityBanner />
-      </div>
-
-      <header
-        aria-label="Audio Capsule Bar"
-        className="absolute top-0 inset-x-0 z-20 pointer-events-none pt-safe"
-      >
-        <div className="mx-auto max-w-md px-4 pt-2">
-          <div className="pointer-events-auto flex items-center justify-between rounded-full bg-neutral-900/90 px-4 py-2 border border-white/10 backdrop-blur-md shadow-lg text-xs font-mono text-neutral-300">
-            <span className="font-semibold text-amber-500">RailWaze Live</span>
-            <span className="truncate max-w-[180px] text-neutral-400">
-              {activeAudio ? activeAudio.title : 'PLACEHOLDER_AUDIO_TRACK'}
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {activeStation && (
-        <section
-          aria-label="Station Memory Vault"
-          data-testid="memory-vault-panel"
-          className="
-            absolute z-30 transition-all duration-300 ease-out flex flex-col
-            inset-x-0 bottom-0 max-h-[70vh] rounded-t-2xl pb-safe
-            md:inset-y-4 md:left-4 md:right-auto md:w-[420px] md:max-h-[calc(100dvh-2rem)] md:rounded-2xl
-            bg-neutral-900/95 border border-white/10 shadow-2xl backdrop-blur-md
-          "
-        >
-          <div className="flex justify-center pt-2 pb-1 md:hidden">
-            <div className="w-10 h-1 rounded-full bg-neutral-700" />
-          </div>
-
-          <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
-            <h2 className="text-base font-semibold tracking-wide text-neutral-100">
-              {activeStation.name} Vault
-            </h2>
-            <button
-  onClick={() => setIsPassportOpen(true)}
-  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-rail-blue hover:bg-rail-blue-dark rounded-md transition-colors"
-  aria-label="Open Trans-Karoo Passport"
->
-  <PassportIcon className="w-4 h-4" />
-  <span>Trans-Karoo Passport</span>
-</button>
-          </div>
-
-          <div className="p-4 overflow-y-auto overflow-x-hidden min-h-0 flex-1">
-            <MemoryVaultSlider stationId={activeStation.id ?? activeStation.stationId ?? ''} />
-          </div>
-        </section>
-      )}
-
-=======
       {/* Audio Capsule Modal */}
->>>>>>> c8f4007a5452f8894ba91babaca8ef4ac4a1d751
       {activeAudio && (
         <AudioCapsule
           isOpen={activeAudio.isOpen}

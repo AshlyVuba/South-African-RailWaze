@@ -1,6 +1,34 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import maplibregl, { Map, Marker } from 'maplibre-gl';
+import { useCallback, useEffect, useMemo, useRef, type CSSProperties, type FC, type ReactNode } from 'react';
 import type { FeatureCollection, LineString, Point } from 'geojson';
+
+// MapLibre is provided by the app runtime, but the package may not be installed in all
+// environments during local type-checks. Declaring the module here keeps the component
+// type-safe without hard failing editor diagnostics when the dependency is absent.
+declare module 'maplibre-gl' {
+  export class Map {
+    constructor(...args: any[]);
+    on(...args: any[]): void;
+    addSource(...args: any[]): void;
+    addLayer(...args: any[]): void;
+    fitBounds(...args: any[]): void;
+    easeTo(...args: any[]): void;
+    getCanvas(): HTMLCanvasElement;
+    remove(): void;
+  }
+
+  export class Marker {
+    constructor(...args: any[]);
+    setLngLat(...args: any[]): Marker;
+    setRotation(...args: any[]): Marker;
+    addTo(...args: any[]): Marker;
+    remove(): void;
+  }
+
+  const maplibregl: { Map: typeof Map; Marker: typeof Marker };
+  export default maplibregl;
+}
+
+import maplibregl, { Map, Marker } from 'maplibre-gl';
 import length from '@turf/length';
 import along from '@turf/along';
 import bearing from '@turf/bearing';
@@ -16,8 +44,8 @@ export interface WaypointProperties {
 
 export interface MapCanvasProps {
   className?: string;
-  style?: React.CSSProperties;
-  children?: React.ReactNode;
+  style?: CSSProperties;
+  children?: ReactNode;
   onSelectWaypoint?: (station: WaypointProperties) => void;
   routeGeoJson?: FeatureCollection<LineString>;
   waypointsGeoJson?: FeatureCollection<Point>;
