@@ -12,7 +12,9 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         content={
             "error": {
                 "code": "RATE_LIMIT_EXCEEDED",
-                "message": f"Rate limit exceeded. Try again in {retry_after_seconds} seconds.",
+                "message": (
+                    f"Rate limit exceeded. Try again in {retry_after_seconds} seconds."
+                ),
                 "details": str(exc.detail),
             }
         },
