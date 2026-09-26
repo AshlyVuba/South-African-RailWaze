@@ -110,12 +110,13 @@ export const UnifiedViewport: React.FC = () => {
               {activeStation.name} Vault
             </h2>
             <button
-              onClick={handleCloseVault}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-white/10 transition-colors shrink-0"
-              aria-label="Close card"
-            >
-              ✕
-            </button>
+  onClick={() => setIsPassportOpen(true)}
+  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-rail-blue hover:bg-rail-blue-dark rounded-md transition-colors"
+  aria-label="Open Trans-Karoo Passport"
+>
+  <PassportIcon className="w-4 h-4" />
+  <span>Trans-Karoo Passport</span>
+</button>
           </div>
 
           <div className="p-4 overflow-y-auto overflow-x-hidden min-h-0 flex-1">
