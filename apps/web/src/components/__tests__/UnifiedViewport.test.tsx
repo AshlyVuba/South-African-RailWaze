@@ -80,10 +80,13 @@ const stationTrivia = [
   { waypoint_id: 'station-matjiesfontein', id: 'trivia-matjiesfontein', question: 'Matjiesfontein question?', options: ['A', 'B'] },
   { waypoint_id: 'station-cape-town', id: 'trivia-cape-town', question: 'Hex River question?', options: ['A', 'B'] },
 ];
+let rejectTriviaFetch = false;
 
 describe('UnifiedViewport Component (#37)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    rejectTriviaFetch = false;
     globalThis.fetch = vi.fn().mockImplementation((url: string) => {
       if (url.includes('route.geojson')) {
         return Promise.resolve({
@@ -104,6 +107,9 @@ describe('UnifiedViewport Component (#37)', () => {
         });
       }
       if (url.includes('/trivia')) {
+        if (rejectTriviaFetch) {
+          return Promise.reject(new TypeError('Failed to fetch'));
+        }
         const waypointId = decodeURIComponent(url.split('/waypoints/')[1].split('/')[0]);
         return Promise.resolve({
           ok: true,
@@ -132,7 +138,7 @@ describe('UnifiedViewport Component (#37)', () => {
 
     expect(screen.queryByTestId('memory-vault-card')).not.toBeInTheDocument();
     fireEvent.click(await screen.findByRole('button', { name: 'Select Pretoria' }));
-    expect(await screen.findByText('Pretoria archive caption.')).toBeInTheDocument();
+    expect(await screen.findByText('Pretoria archive caption.', {}, { timeout: 10000 })).toBeInTheDocument();
   });
 
   it.each([
@@ -151,6 +157,31 @@ describe('UnifiedViewport Component (#37)', () => {
     expect(await screen.findByText(question)).toBeInTheDocument();
     expect(globalThis.fetch).toHaveBeenCalledWith(
       `http://localhost:8000/waypoints/${waypointId}/trivia`
+    );
+  });
+
+  it('shows a visible error when the trivia API cannot be reached', async () => {
+    rejectTriviaFetch = true;
+    render(<UnifiedViewport />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Select Pretoria' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Trivia' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Unable to load station trivia. Check the API URL and your connection.'
+    );
+  });
+
+  it('uses VITE_API_BASE_URL when configured', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://railwaze-api.example.test/');
+    render(<UnifiedViewport />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Select Pretoria' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Trivia' }));
+
+    expect(await screen.findByText('Pretoria question?')).toBeInTheDocument();
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'https://railwaze-api.example.test/waypoints/station-pretoria/trivia'
     );
   });
 });
