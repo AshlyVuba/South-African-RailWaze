@@ -134,5 +134,25 @@ TheLastCodeBenders —  working across an "Avatar" thematic role split:
 | Aphiwe Vuba | Airbender | Cultural research & storytelling |
 | Lauren Steenkamp | The Avatar | Systems integration & offline data |
 
+## How to run our code
+
+**Backend**
+```
+cd apps\api
+.venv\Scripts\activate
+pip install -r requirements.txt
+ruff check .
+pytest
+```
+
+**Frontend**
+```
+cd apps\web
+npm install
+npm run lint
+npm test
+npm run build
+```
+
 ---
 *#GKHack26*
