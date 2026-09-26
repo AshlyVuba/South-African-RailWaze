@@ -20,6 +20,9 @@ help:
 	@echo "  make frontend-check     frontend-lint + frontend-test"
 	@echo "  make check              Everything CI runs, backend + frontend"
 	@echo "  make clean              Remove __pycache__ / .pytest_cache"
+	@echo "  make docker-up          Build and start containers in detached mode"
+	@echo "  make docker-down        Stop and remove containers"
+	@echo "  make docker-test        Run backend tests inside Docker container"
 
 # --- Setup ------------------------------------------------------------
 
@@ -59,3 +62,17 @@ check: backend-check frontend-check
 clean:
 	find apps/api -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	rm -rf apps/api/.pytest_cache
+
+# --- Docker -------------------------------------------------------------
+
+.PHONY: docker-up docker-down docker-test
+
+docker-up:
+	docker compose up --build -d
+
+docker-down:
+	docker compose down
+
+docker-test:
+	docker compose run --rm api pytest tests/
+
