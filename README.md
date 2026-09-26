@@ -50,6 +50,7 @@ Domestic rail tourists, backpackers, scenic travelers, and school groups riding 
 - **Backend:** Python FastAPI serving GeoJSON waypoints and trivia state, Pydantic-validated
 - **Data:** SQLite / PostGIS-compatible coordinates
 - **Offline:** Service workers pre-caching audio, map tiles, and images
+- **Quantum:** ANU Quantum Random Numbers Server for true quantum-sourced randomness (vacuum-fluctuation measurement, not a classical PRNG) shuffling trivia answer-option display order, with an automatic classical (Math.random()) fallback
 
 ## Security (SSDLC)
 
