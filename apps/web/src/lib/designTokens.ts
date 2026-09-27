@@ -11,6 +11,12 @@
  */
 
 export const designTokens = {
+  // Shell & Surface Framing
+  shell: {
+    viewport: 'bg-neutral-950 text-neutral-100',
+    panel: 'bg-neutral-900/80 border border-white/10 rounded-full shadow-lg backdrop-blur-sm',
+  },
+
   // Container & Backdrop Framing
   containers: {
     dialog: 'bg-neutral-900/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-4',
@@ -37,6 +43,34 @@ export const designTokens = {
     audioButton: 'w-10 h-10 rounded-full bg-sky-500 hover:bg-sky-400 text-neutral-950 flex items-center justify-center font-bold transition-colors shrink-0 shadow-md shadow-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-300 disabled:opacity-50 disabled:cursor-not-allowed',
     audioWaveformActive: '#38bdf8', // sky-400 for 2D canvas context
     audioWaveformInactive: '#404040', // neutral-700
+  },
+
+  // Avatar team accents for element-specific controls and surfaces
+  elements: {
+    water: {
+      accent: 'text-sky-300',
+      surface: 'border-sky-400/30 bg-sky-950/30',
+      button: 'bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-neutral-950 font-mono font-bold rounded-lg transition-colors min-h-[44px] px-4 py-2 flex items-center justify-center shadow-md',
+      range: 'accent-sky-500',
+    },
+    fire: {
+      accent: 'text-orange-300',
+      surface: 'border-orange-400/30 bg-orange-950/30',
+      button: 'bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-neutral-950 font-mono font-bold rounded-lg transition-colors min-h-[44px] px-4 py-2 flex items-center justify-center shadow-md',
+      range: 'accent-orange-500',
+    },
+    earth: {
+      accent: 'text-emerald-300',
+      surface: 'border-emerald-400/30 bg-emerald-950/30',
+      button: 'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-neutral-950 font-mono font-bold rounded-lg transition-colors min-h-[44px] px-4 py-2 flex items-center justify-center shadow-md',
+      range: 'accent-emerald-500',
+    },
+    air: {
+      accent: 'text-cyan-200',
+      surface: 'border-cyan-300/30 bg-cyan-950/30',
+      button: 'bg-cyan-200 hover:bg-cyan-100 active:bg-cyan-300 text-neutral-950 font-mono font-bold rounded-lg transition-colors min-h-[44px] px-4 py-2 flex items-center justify-center shadow-md',
+      range: 'accent-cyan-300',
+    },
   },
 
   // Typography Tokens

@@ -1,7 +1,10 @@
 {
-  "/manifest.json": "91849fe49d350afacd0fb32f427e2de2eae386bcf164572559d8f7866658b008",
-  "/icons/icon.svg": "a968f5e8a67a530fde336a587b473786a37df1622efc22863b418a1baf86f013",
-  "/data/route.geojson": "cb65667f80a0cdfa515effd12304ae8fc36a2054227e106df734e288527f883d",
-  "/data/waypoints.geojson": "8358dedbe7e5d50f9257ddc9b33864cad11a776df8b25301cc0d837e4e58ef51",
-  "/data/memory-vault.json": "64956d1c8ab876814da99892cdb92b54196110d80b008afa43f9e3eed9186d18"
+  "/manifest.json": "f2f63afe7518dc049ba61bd9844f85af583a431d518a7b89015d3316738050c3",
+  "/icons/icon.svg": "23cc3dacf86a44c256bd00f8b1bdf38ee3bb1e8fe290cd17626f6398a3d5ec8a",
+  "/data/route.geojson": "1411a207a4db9c552be1647e3c5748ddd95d3ab7d0bc2ca0128308674a69ad2a",
+  "/data/waypoints.geojson": "30a742fb356e09b4309f184622fbec9027b9b4f69a200fa17fc8a617a601eeee",
+  "/data/memory-vault.json": "ae9acf51d189509501e7ae3e517a16712c36c69c94109b3d79ffccf11f25e492",
+  "/images/stations/matjiesfontein-then.jpg": "f5089d9c87321476647b097a05c501c5784ca24a4f4b5b8106c63b1764a47285",
+  "/images/stations/matjiesfontein-now.jpg": "2e9ec4110dce3ec2621d820034441c91b86ee72c101712555a715e7fffae4b0d",
+  "/audio/audio-matjiesfontein.mp3": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 }
