@@ -75,4 +75,3 @@ docker-down:
 
 docker-test:
 	docker compose run --rm api pytest tests/
-
