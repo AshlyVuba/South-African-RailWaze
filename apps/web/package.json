@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:demo": "vitest run src/__tests__/App.test.tsx src/components/__tests__/OperationsPortal.test.tsx src/components/__tests__/UnifiedViewport.test.tsx --maxWorkers=1 --pool=forks"
+    "test:demo": "vitest run src/__tests__/App.test.tsx src/components/__tests__/OperationsPortal.test.tsx src/components/__tests__/UnifiedViewport.test.tsx src/components/__tests__/MapCanvas.test.tsx --maxWorkers=1 --pool=forks"
   },
   "dependencies": {
     "@noble/post-quantum": "^0.7.0",

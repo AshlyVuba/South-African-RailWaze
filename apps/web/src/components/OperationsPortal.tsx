@@ -71,6 +71,7 @@ export function OperationsPortal() {
   const [trainProgress, setTrainProgress] = useState(68);
   const [reliefUpdate, setReliefUpdate] = useState<string | null>(null);
   const [strandedPassengers, setStrandedPassengers] = useState(18);
+  const [scheduleReferenceTime] = useState(() => new Date());
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -219,6 +220,8 @@ export function OperationsPortal() {
             broadcast={broadcast}
             arrivalTime={arrivalTime}
             arrivalAdjustment={arrivalAdjustment}
+            trainProgress={trainProgress}
+            scheduleReferenceTime={scheduleReferenceTime}
             beaconSaved={beaconSaved}
             onSaveBeacon={saveOfflineBeacon}
             onRefreshEta={() => setArrivalAdjustment((adjustment) => adjustment + 3)}
@@ -228,9 +231,11 @@ export function OperationsPortal() {
             broadcast={broadcast}
             broadcastType={broadcastType}
             broadcastMessage={broadcastMessage}
-            trainProgress={trainProgress}
             trainPosition={trainPosition}
             arrivalTime={arrivalTime}
+            arrivalAdjustment={arrivalAdjustment}
+            trainProgress={trainProgress}
+            scheduleReferenceTime={scheduleReferenceTime}
             strandedPassengers={strandedPassengers}
             reliefUpdate={reliefUpdate}
             onTypeChange={setBroadcastType}
@@ -254,12 +259,23 @@ interface PassengerViewProps {
   broadcast: OperationsBroadcast;
   arrivalTime: string;
   arrivalAdjustment: number;
+  trainProgress: number;
+  scheduleReferenceTime: Date;
   beaconSaved: boolean;
   onSaveBeacon: () => void;
   onRefreshEta: () => void;
 }
 
-function PassengerView({ broadcast, arrivalTime, arrivalAdjustment, beaconSaved, onSaveBeacon, onRefreshEta }: PassengerViewProps) {
+function PassengerView({
+  broadcast,
+  arrivalTime,
+  arrivalAdjustment,
+  trainProgress,
+  scheduleReferenceTime,
+  beaconSaved,
+  onSaveBeacon,
+  onRefreshEta,
+}: PassengerViewProps) {
   const isAllClear = broadcast.type === 'all-clear';
   return (
     <section aria-label="Passenger reassurance" className="space-y-5">
@@ -333,9 +349,20 @@ function PassengerView({ broadcast, arrivalTime, arrivalAdjustment, beaconSaved,
         </article>
       </div>
 
+      <ScheduleTracker
+        trainProgress={trainProgress}
+        arrivalAdjustment={arrivalAdjustment}
+        scheduleReferenceTime={scheduleReferenceTime}
+      />
+
       <div className="grid gap-4 sm:grid-cols-3">
         <JourneyInfo icon={TrainFront} label="Your train" value="Trans-Karoo 401" detail="On the main corridor" />
-        <JourneyInfo icon={MapPin} label="Next major stop" value="Matjiesfontein" detail="Approximately 142 km ahead" />
+        <JourneyInfo
+          icon={MapPin}
+          label="Next major stop"
+          value={trainProgress < 66.7 ? 'Matjiesfontein' : 'Cape Town'}
+          detail={trainProgress < 66.7 ? 'Approximately 142 km ahead' : 'Journey destination'}
+        />
         <JourneyInfo icon={BellRing} label="Next update" value="In 10 minutes" detail="Or sooner if conditions change" />
       </div>
     </section>
@@ -354,9 +381,11 @@ interface StaffViewProps {
   broadcastType: BroadcastType;
   broadcastMessage: string;
   broadcastError: string | null;
-  trainProgress: number;
   trainPosition: TrainPosition;
   arrivalTime: string;
+  arrivalAdjustment: number;
+  trainProgress: number;
+  scheduleReferenceTime: Date;
   strandedPassengers: number;
   reliefUpdate: string | null;
   onTypeChange: (type: BroadcastType) => void;
@@ -369,9 +398,11 @@ function StaffView({
   broadcast,
   broadcastType,
   broadcastMessage,
-  trainProgress,
   trainPosition,
   arrivalTime,
+  arrivalAdjustment,
+  trainProgress,
+  scheduleReferenceTime,
   strandedPassengers,
   reliefUpdate,
   onTypeChange,
@@ -440,6 +471,12 @@ function StaffView({
         </article>
       </div>
 
+      <ScheduleTracker
+        trainProgress={trainProgress}
+        arrivalAdjustment={arrivalAdjustment}
+        scheduleReferenceTime={scheduleReferenceTime}
+      />
+
       <article className="rounded-2xl border border-slate-700 bg-[#1e293b] p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex gap-3">
@@ -457,6 +494,88 @@ function StaffView({
         </div>
         {reliefUpdate && <p role="status" className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-400/10 p-3 text-sm text-emerald-200"><CheckCircle2 size={17} /> {reliefUpdate}</p>}
       </article>
+    </section>
+  );
+}
+
+function ScheduleTracker({
+  trainProgress,
+  arrivalAdjustment,
+  scheduleReferenceTime,
+}: {
+  trainProgress: number;
+  arrivalAdjustment: number;
+  scheduleReferenceTime: Date;
+}) {
+  const stops = [
+    { name: 'Pretoria', progress: 0, scheduleOffsetMinutes: -480 },
+    { name: 'Kimberley', progress: 33.3, scheduleOffsetMinutes: -240 },
+    { name: 'Matjiesfontein', progress: 66.7, scheduleOffsetMinutes: -30 },
+    { name: 'Cape Town', progress: 100, scheduleOffsetMinutes: 0 },
+  ];
+  const nextStopIndex = stops.findIndex((stop) => stop.progress > trainProgress);
+  const lastPassedIndex = stops.reduce(
+    (lastIndex, stop, index) => stop.progress <= trainProgress ? index : lastIndex,
+    -1,
+  );
+  const currentStopIndex = nextStopIndex < 0 ? -1 : nextStopIndex;
+
+  return (
+    <section aria-label="Journey schedule tracker" className="overflow-hidden rounded-2xl border border-slate-700 bg-[#1e293b]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 px-5 py-4">
+        <div>
+          <div className="flex items-center gap-2"><Clock3 size={18} className="text-cyan-300" /><h2 className="font-bold text-white">Schedule tracker</h2></div>
+          <p className="mt-1 text-xs text-slate-400">Trans-Karoo 401 · planned and live stop estimates</p>
+        </div>
+        <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-200">
+          <Activity size={14} /> {arrivalAdjustment === 0 ? 'On schedule' : `${arrivalAdjustment} min delay`}
+        </span>
+      </div>
+      <div className="hidden grid-cols-[minmax(0,1.4fr)_1fr_1fr_0.8fr] gap-4 border-b border-slate-700 bg-slate-950/30 px-5 py-2 text-[9px] font-bold uppercase tracking-wider text-slate-500 sm:grid">
+        <span>Station</span><span>Scheduled</span><span>Estimated</span><span>Status</span>
+      </div>
+      <div className="divide-y divide-slate-700/80">
+        {stops.map((stop, index) => {
+          const scheduledTime = index === stops.length - 1
+            ? new Date(arrivalBase)
+            : new Date(scheduleReferenceTime);
+          if (index !== stops.length - 1) {
+            scheduledTime.setMinutes(scheduledTime.getMinutes() + stop.scheduleOffsetMinutes);
+          }
+          const estimatedTime = new Date(scheduledTime);
+          if (index > lastPassedIndex) {
+            estimatedTime.setMinutes(estimatedTime.getMinutes() + arrivalAdjustment);
+          }
+          const status = index <= lastPassedIndex
+            ? (index === stops.length - 1 && trainProgress >= 99 ? 'Arrived' : 'Departed')
+            : index === currentStopIndex
+              ? (stop.progress - trainProgress <= 8 ? 'Approaching' : 'En route')
+              : 'Upcoming';
+          const statusClass = status === 'Departed'
+            ? 'text-emerald-300'
+            : status === 'En route' || status === 'Approaching'
+              ? 'text-cyan-300'
+              : 'text-slate-400';
+
+          return (
+            <div key={stop.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-3 sm:grid-cols-[minmax(0,1.4fr)_1fr_1fr_0.8fr]">
+              <div className="flex items-center gap-3">
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${status === 'Departed' ? 'bg-emerald-400' : status === 'Upcoming' ? 'bg-slate-600' : 'bg-cyan-300 shadow-[0_0_10px_rgba(6,182,212,.6)]'}`} />
+                <span className="font-semibold text-white">{stop.name}</span>
+              </div>
+              <div className="text-right sm:text-left">
+                <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 sm:hidden">Scheduled</span>
+                <span className="text-sm text-slate-300">{formatTime(scheduledTime)}</span>
+              </div>
+              <div className="text-right sm:text-left">
+                <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 sm:hidden">Estimated</span>
+                <span className="text-sm font-semibold text-cyan-100">{formatTime(estimatedTime)}</span>
+              </div>
+              <span className={`col-span-2 text-right text-xs font-bold sm:col-span-1 sm:text-left ${statusClass}`}>{status}</span>
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }

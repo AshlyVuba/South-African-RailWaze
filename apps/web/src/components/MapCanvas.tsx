@@ -134,10 +134,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             },
           },
         ],
-        terrain: {
-          source: 'terrain-rgb',
-          exaggeration: 1.6,
-        },
         sky: {
           'sky-color': '#38BDF8',
           'sky-horizon-blend': 0.6,
@@ -155,16 +151,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     });
 
     map.on('load', () => {
-      if (typeof (map as unknown as { setSky?: (sky: unknown) => void }).setSky === 'function') {
-        (map as unknown as { setSky: (sky: unknown) => void }).setSky({
-          'sky-color': '#38BDF8',
-          'sky-horizon-blend': 0.6,
-          'horizon-color': '#BAE6FD',
-          'horizon-fog-blend': 0.5,
-          'fog-color': '#E0F2FE',
-          'fog-ground-blend': 0.3,
-        });
-      }
+      map.setTerrain({
+        source: 'terrain-rgb',
+        exaggeration: 2.2,
+      });
+      map.setSky({
+        'sky-color': '#38BDF8',
+        'sky-horizon-blend': 0.6,
+        'horizon-color': '#BAE6FD',
+        'horizon-fog-blend': 0.5,
+        'fog-color': '#E0F2FE',
+        'fog-ground-blend': 0.3,
+      });
 
       if (routeGeoJson.features.length > 0) {
         map.addSource('rail-corridor', {
@@ -273,6 +271,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       }
 
       mapRef.current = map;
+      map.resize();
       if (initialBounds) {
         map.fitBounds(initialBounds, {
           padding: { top: 72, right: 28, bottom: 108, left: 28 },

@@ -13,6 +13,7 @@ describe('RailWaze Operations & Reassurance Portal demo', () => {
 
     expect(screen.getByText(/Karoo Line Maintenance: Minor delay ahead/)).toBeInTheDocument();
     expect(screen.getByText('Updated arrival estimate')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /journey schedule tracker/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /save offline assistance request/i }));
     expect(screen.getByRole('status')).toHaveTextContent(/saved locally/i);
@@ -30,6 +31,13 @@ describe('RailWaze Operations & Reassurance Portal demo', () => {
 
     expect(screen.getByRole('region', { name: /staff operations dashboard/i })).toBeInTheDocument();
     expect(screen.getByText(/Simulated GPS telemetry/)).toBeInTheDocument();
+    const schedule = screen.getByRole('region', { name: /journey schedule tracker/i });
+    expect(within(schedule).getByText('Schedule tracker')).toBeInTheDocument();
+    expect(within(schedule).getByText('Pretoria')).toBeInTheDocument();
+    expect(within(schedule).getByText('Kimberley')).toBeInTheDocument();
+    expect(within(schedule).getByText('Matjiesfontein')).toBeInTheDocument();
+    expect(within(schedule).getByText('Cape Town')).toBeInTheDocument();
+    expect(within(schedule).getByText('25 min delay')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Passenger message'), {
       target: { value: 'The line is clear. We are moving again and your ETA has improved.' },
@@ -37,6 +45,7 @@ describe('RailWaze Operations & Reassurance Portal demo', () => {
     fireEvent.change(screen.getByLabelText('Update category'), { target: { value: 'all-clear' } });
     fireEvent.click(screen.getByRole('button', { name: /publish verified update/i }));
     expect(screen.getByText('The line is clear. We are moving again and your ETA has improved.')).toBeInTheDocument();
+    expect(within(schedule).getByText('5 min delay')).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('railwaze:operations-broadcast') || '{}')).toMatchObject({
       type: 'all-clear',
       message: 'The line is clear. We are moving again and your ETA has improved.',
