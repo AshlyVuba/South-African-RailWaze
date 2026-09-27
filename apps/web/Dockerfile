@@ -18,6 +18,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Provide lightweight SPA config so client-side routing works
 RUN echo 'server { \
     listen 80; \
+    location /assets/ { \
+        root /usr/share/nginx/html; \
+        try_files $uri =404; \
+    } \
     location / { \
         root /usr/share/nginx/html; \
         index index.html index.htm; \

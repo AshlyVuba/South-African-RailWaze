@@ -116,7 +116,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           {
             id: 'background-base',
             type: 'background',
-            paint: { 'background-color': '#060B19' },
+            paint: { 'background-color': '#E2E8F0' },
           },
           {
             id: 'base-osm',
@@ -125,9 +125,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             minzoom: 0,
             maxzoom: 19,
             paint: {
-              'raster-opacity': 0.15,
-              'raster-saturation': -0.9,
-              'raster-contrast': 0.3,
+              'raster-opacity': 0.85,
+              'raster-saturation': 0.18,
+              'raster-contrast': 0.05,
             },
           },
         ],
@@ -135,16 +135,35 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           source: 'terrain-rgb',
           exaggeration: 1.6,
         },
+        sky: {
+          'sky-color': '#38BDF8',
+          'sky-horizon-blend': 0.6,
+          'horizon-color': '#BAE6FD',
+          'horizon-fog-blend': 0.5,
+          'fog-color': '#E0F2FE',
+          'fog-ground-blend': 0.3,
+        },
       },
       center: initialCenter,
       zoom: 5.5,
-      pitch: 60,
-      bearing: -22,
+      pitch: 65,
+      bearing: -20,
       antialias: true,
       maxPitch: 85,
     });
 
     map.on('load', () => {
+      if (typeof (map as unknown as { setSky?: (sky: unknown) => void }).setSky === 'function') {
+        (map as unknown as { setSky: (sky: unknown) => void }).setSky({
+          'sky-color': '#38BDF8',
+          'sky-horizon-blend': 0.6,
+          'horizon-color': '#BAE6FD',
+          'horizon-fog-blend': 0.5,
+          'fog-color': '#E0F2FE',
+          'fog-ground-blend': 0.3,
+        });
+      }
+
       if (routeGeoJson.features.length > 0) {
         map.addSource('rail-corridor', {
           type: 'geojson',
@@ -156,9 +175,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           type: 'line',
           source: 'rail-corridor',
           paint: {
-            'line-color': '#F59E0B',
-            'line-width': 6,
-            'line-opacity': 0.25,
+            'line-color': '#D97706',
+            'line-width': 8,
+            'line-opacity': 0.4,
             'line-blur': 3,
           },
         });
@@ -168,8 +187,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           type: 'line',
           source: 'rail-corridor',
           paint: {
-            'line-color': '#FBBF24',
-            'line-width': 2.5,
+            'line-color': '#B45309',
+            'line-width': 3,
           },
         });
       }
@@ -185,11 +204,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           type: 'circle',
           source: 'waypoints',
           paint: {
-            'circle-radius': 10,
+            'circle-radius': 12,
             'circle-color': '#F59E0B',
-            'circle-opacity': 0.3,
-            'circle-stroke-width': 1,
-            'circle-stroke-color': '#FBBF24',
+            'circle-opacity': 0.35,
+            'circle-stroke-width': 1.5,
+            'circle-stroke-color': '#D97706',
           },
         });
 
@@ -198,10 +217,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           type: 'circle',
           source: 'waypoints',
           paint: {
-            'circle-radius': 5,
+            'circle-radius': 6,
             'circle-color': '#FFFBEB',
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#D97706',
+            'circle-stroke-width': 2.5,
+            'circle-stroke-color': '#B45309',
           },
         });
 
@@ -232,6 +251,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           padding: { top: 72, right: 28, bottom: 108, left: 28 },
           maxZoom: 5.25,
           duration: 0,
+          pitch: 65,
+          bearing: -20,
         });
       }
     });
@@ -265,13 +286,14 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         if (!trainMarkerRef.current) {
           const markerEl = document.createElement('div');
           markerEl.className = 'train-marker';
-          markerEl.style.width = '28px';
-          markerEl.style.height = '28px';
+          markerEl.style.width = '30px';
+          markerEl.style.height = '30px';
           markerEl.style.display = 'flex';
           markerEl.style.alignItems = 'center';
           markerEl.style.justifyContent = 'center';
+          markerEl.style.filter = 'drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35))';
           markerEl.innerHTML = `
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="#F59E0B" stroke="#060B19" stroke-width="1.5">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="#D97706" stroke="#FFFFFF" stroke-width="1.5">
             <path d="M4 15.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h12v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V5c0-3.5-3.58-4-8-4s-8 .5-8 4v10.5zm8-12.5c3.71 0 5.8 0.42 6 2H6c.2-1.58 2.29-2 6-2zm-5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm10 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-7 6c-.55 0-1-.45-1-1s.45-1 1-1h4c.55 0 1 .45 1 1s-.45 1-1 1h-4z"/>
           </svg>
         `;
@@ -285,7 +307,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           trainMarkerRef.current.setRotation(currentBearing);
         }
 
-        map.easeTo({ center: [lng, lat], duration: 0, pitch: 60 });
+        map.easeTo({ center: [lng, lat], duration: 0, pitch: 65 });
 
         if (onWaypointReached && waypointsGeoJson.features.length > 0) {
           const currentTurfPt = point([lng, lat]);
@@ -326,7 +348,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             width: '100%',
             minHeight: '320px',
             height: '100%',
-            backgroundColor: '#060B19',
+            background: 'linear-gradient(180deg, #38BDF8 0%, #7DD3FC 35%, #BAE6FD 65%, #E0F2FE 100%)',
+            backgroundColor: '#BAE6FD',
             overflow: 'hidden',
             boxSizing: 'border-box',
             touchAction: 'none',

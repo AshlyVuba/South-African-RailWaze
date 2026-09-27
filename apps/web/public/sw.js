@@ -11,7 +11,7 @@
 // would remove this duplication entirely; noted as a follow-up rather than
 // solved here to keep this ticket's scope to "make offline caching work."
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `railwaze-static-${CACHE_VERSION}`;
 const TILE_CACHE = `railwaze-tiles-${CACHE_VERSION}`;
 
@@ -200,6 +200,28 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
+
+    // HTML navigation / root document: network-first with cache fallback, ensuring
+    // a newly deployed build/bundle is picked up immediately while preserving offline support.
+    if (request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+        event.respondWith(
+            (async () => {
+                try {
+                    const response = await fetch(request);
+                    if (response.ok) {
+                        const cache = await caches.open(STATIC_CACHE);
+                        cache.put(request, response.clone());
+                    }
+                    return response;
+                } catch {
+                    const cached = (await caches.match('/index.html')) || (await caches.match('/'));
+                    if (cached) return cached;
+                    return new Response('Offline and page not cached', { status: 504 });
+                }
+            })()
+        );
+        return;
+    }
 
     // Live API calls: network-first, falling back to cache only as a last
     // resort so a passenger still sees their last-known passport/waypoint

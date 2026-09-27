@@ -193,7 +193,7 @@ export const UnifiedViewport: React.FC = () => {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        backgroundColor: '#060B19',
+        backgroundColor: '#F0F9FF',
         fontFamily: 'sans-serif',
       }}
     >
@@ -222,15 +222,16 @@ export const UnifiedViewport: React.FC = () => {
       >
         <div
           style={{
-            backgroundColor: 'rgba(6, 11, 25, 0.85)',
-            backdropFilter: 'blur(8px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
             padding: '6px 14px',
-            borderRadius: 8,
-            border: '1px solid rgba(245, 158, 11, 0.3)',
+            borderRadius: 10,
+            border: '1px solid rgba(217, 119, 6, 0.35)',
+            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.08)',
             pointerEvents: 'auto',
           }}
         >
-          <span style={{ color: '#FBBF24', fontWeight: 800, fontSize: 13, letterSpacing: 1 }}>
+          <span style={{ color: '#B45309', fontWeight: 800, fontSize: 13, letterSpacing: 1 }}>
             RAILWAZE 3D
           </span>
         </div>
@@ -243,15 +244,15 @@ export const UnifiedViewport: React.FC = () => {
           onClick={() => setShowPassport(true)}
           style={{
             backgroundColor: '#F59E0B',
-            color: '#060B19',
+            color: '#FFFFFF',
             fontWeight: 700,
             fontSize: 12,
             border: 'none',
-            borderRadius: 8,
-            padding: '8px 14px',
+            borderRadius: 10,
+            padding: '8px 16px',
             cursor: 'pointer',
             pointerEvents: 'auto',
-            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.4)',
+            boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
           }}
         >
           PASSPORT
@@ -295,11 +296,12 @@ export const UnifiedViewport: React.FC = () => {
           transform: 'translateX(-50%)',
           width: '92%',
           maxWidth: 375,
-          backgroundColor: 'rgba(6, 11, 25, 0.92)',
-          backdropFilter: 'blur(8px)',
-          borderRadius: 12,
-          padding: '10px 16px',
-          border: '1px solid rgba(245, 158, 11, 0.3)',
+          backgroundColor: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: 14,
+          padding: '12px 18px',
+          border: '1px solid rgba(217, 119, 6, 0.35)',
+          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12)',
           zIndex: 20,
           boxSizing: 'border-box',
         }}
@@ -308,14 +310,15 @@ export const UnifiedViewport: React.FC = () => {
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            color: '#FBBF24',
+            color: '#92400E',
             fontSize: 11,
-            fontWeight: 700,
+            fontWeight: 800,
             marginBottom: 6,
             fontFamily: 'monospace',
+            letterSpacing: '0.5px',
           }}
         >
-          <span>PROGRESS</span>
+          <span>JOURNEY PROGRESS</span>
           <span>{Math.round(progress)}%</span>
         </div>
         <input
@@ -327,7 +330,7 @@ export const UnifiedViewport: React.FC = () => {
           onChange={(e) => setProgress(parseFloat(e.target.value))}
           style={{
             width: '100%',
-            accentColor: '#F59E0B',
+            accentColor: '#D97706',
             cursor: 'pointer',
           }}
         />
