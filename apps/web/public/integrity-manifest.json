@@ -3,5 +3,9 @@
   "/icons/icon.svg": "a968f5e8a67a530fde336a587b473786a37df1622efc22863b418a1baf86f013",
   "/data/route.geojson": "cb65667f80a0cdfa515effd12304ae8fc36a2054227e106df734e288527f883d",
   "/data/waypoints.geojson": "8358dedbe7e5d50f9257ddc9b33864cad11a776df8b25301cc0d837e4e58ef51",
-  "/data/memory-vault.json": "64956d1c8ab876814da99892cdb92b54196110d80b008afa43f9e3eed9186d18"
+  "/data/memory-vault.json": "ef6e679060bea3ee4a1fc53feab6879e2fb6c8dc25adbec1316ed21415810116",
+  "/images/stations/pretoria-then.jpg": "7ac3b06f4b27d0eafd81778bede7715d49f9ffb94dacb63f932d9c627d07bd25",
+  "/images/stations/pretoria-now.jpg": "99b5b6123a473248a1b2fe3b1fe5718682660cb75a560a08d24855e34b8e7b1e",
+  "/images/stations/matjiesfontein-then.jpg": "f5089d9c87321476647b097a05c501c5784ca24a4f4b5b8106c63b1764a47285",
+  "/images/stations/matjiesfontein-now.jpg": "2e9ec4110dce3ec2621d820034441c91b86ee72c101712555a715e7fffae4b0d"
 }

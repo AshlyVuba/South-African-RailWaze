@@ -18,9 +18,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: './waypoint.schema.json'
+                $ref: './waypoint.schema.json'
 
   /waypoints/{id}/trivia:
     get:
@@ -42,7 +40,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: './trivia-passport.schema.json#/definitions/TriviaQuestion'
+                  $ref: './trivia-passport.schema.json#/definitions/TriviaQuestionPublic'
         '404':
           description: Waypoint not found
           content:
@@ -52,6 +50,36 @@ paths:
                 properties:
                   detail:
                     type: string
+
+  /waypoints/{waypoint_id}/trivia/answer:
+    post:
+      summary: Submit a trivia answer
+      description: Validates the original option index server-side and awards a station stamp for a correct answer.
+      operationId: submitWaypointTriviaAnswer
+      parameters:
+        - name: waypoint_id
+          in: path
+          required: true
+          description: Waypoint identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './trivia-passport.schema.json#/definitions/AnswerSubmission'
+      responses:
+        '200':
+          description: Answer result and optional stamp award
+          content:
+            application/json:
+              schema:
+                $ref: './trivia-passport.schema.json#/definitions/AnswerResult'
+        '404':
+          description: Waypoint or trivia question not found
+        '429':
+          description: Too many answer submissions
 
   /passport/{sessionId}:
     get:

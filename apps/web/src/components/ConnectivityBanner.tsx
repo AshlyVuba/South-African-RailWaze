@@ -1,5 +1,6 @@
 import React from 'react';
 import { useConnectivity } from '../lib/connectivity';
+import { getApiBaseUrl } from '../lib/api';
 
 export interface ConnectivityBannerProps {
     apiBaseUrl?: string;
@@ -11,7 +12,7 @@ export interface ConnectivityBannerProps {
  * understated - a passenger in a Karoo dead zone should read this as
  * "the app is working fine, just offline," not as an error state.
  */
-export const ConnectivityBanner: React.FC<ConnectivityBannerProps> = ({ apiBaseUrl }) => {
+export const ConnectivityBanner: React.FC<ConnectivityBannerProps> = ({ apiBaseUrl = getApiBaseUrl() }) => {
     const { status } = useConnectivity({ apiBaseUrl });
     const isOffline = status === 'offline';
 

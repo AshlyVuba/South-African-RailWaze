@@ -1,1 +1,39 @@
 @import "tailwindcss";
+
+.railwaze-waypoint-marker {
+  position: relative;
+  border: 1px solid rgb(253 230 138 / 0.9);
+  border-radius: 9999px;
+  background: rgb(15 23 42 / 0.94);
+  padding: 0.35rem 0.65rem;
+  color: #fff7ed;
+  font: 700 11px/1.1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgb(2 6 23 / 0.55), 0 0 0 2px rgb(245 158 11 / 0.22);
+  cursor: pointer;
+  transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+.railwaze-waypoint-marker::after {
+  position: absolute;
+  bottom: -5px;
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid rgb(253 230 138 / 0.9);
+  border-bottom: 1px solid rgb(253 230 138 / 0.9);
+  background: #0f172a;
+  content: "";
+  transform: rotate(45deg);
+}
+
+.railwaze-waypoint-marker:hover,
+.railwaze-waypoint-marker:focus-visible {
+  z-index: 2;
+  border-color: #67e8f9;
+  background: #164e63;
+  outline: 2px solid rgb(103 232 249 / 0.5);
+  outline-offset: 2px;
+  transform: translateY(-2px);
+}

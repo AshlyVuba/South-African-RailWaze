@@ -110,7 +110,9 @@ export async function flushQueue(queueName: string): Promise<FlushResult> {
             const res = await fetch(item.url, {
                 method: item.method,
                 headers: item.body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
-                body: item.body !== undefined ? JSON.stringify(item.body) : undefined,
+                body: item.body !== undefined
+                    ? typeof item.body === 'string' ? item.body : JSON.stringify(item.body)
+                    : undefined,
             });
             if (res.ok) {
                 succeeded += 1;

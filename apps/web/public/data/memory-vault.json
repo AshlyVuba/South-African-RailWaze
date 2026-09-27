@@ -1,24 +1,42 @@
 {
-  "memory_vault_captions": [
-  {
+  "vault-station-pretoria": {
     "memory_vault_id": "vault-station-pretoria",
     "waypoint_id": "station-pretoria",
+    "station_name": "Pretoria",
+    "then_year": "circa 1893",
+    "now_year": "Present Day",
+    "then_image_url": "/images/stations/pretoria-then.jpg",
+    "now_image_url": "/images/stations/pretoria-now.jpg",
     "caption": "NZASM Pretoria Station facade (c. 1893) contrasted with modern commuter transit platforms."
   },
-  {
+  "vault-station-kimberley": {
     "memory_vault_id": "vault-station-kimberley",
     "waypoint_id": "station-kimberley",
+    "station_name": "Kimberley",
+    "then_year": "circa 1875",
+    "now_year": "Present Day",
+    "then_image_url": "/images/stations/kimberley-then.jpg",
+    "now_image_url": "/images/stations/kimberley-now.jpg",
     "caption": "Kimberley open-pit diamond mine workings (c. 1875) juxtaposed with the Big Hole heritage museum."
   },
-  {
+  "vault-station-matjiesfontein": {
     "memory_vault_id": "vault-station-matjiesfontein",
     "waypoint_id": "station-matjiesfontein",
+    "station_name": "Matjiesfontein",
+    "then_year": "circa 1895",
+    "now_year": "Present Day",
+    "then_image_url": "/images/stations/matjiesfontein-then.jpg",
+    "now_image_url": "/images/stations/matjiesfontein-now.jpg",
     "caption": "The historic Lord Milner Hotel and Victorian platform (c. 1899) versus the Karoo siding today."
   },
-  {
+  "vault-station-cape-town": {
     "memory_vault_id": "vault-station-cape-town",
     "waypoint_id": "station-cape-town",
+    "station_name": "Cape Town",
+    "then_year": "circa 1880",
+    "now_year": "Present Day",
+    "then_image_url": "/images/stations/capetown-then.jpg",
+    "now_image_url": "/images/stations/capetown-now.jpg",
     "caption": "19th-century steam train tackling the Hex River Pass descent into the Western Cape."
   }
-]
 }

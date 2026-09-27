@@ -83,6 +83,27 @@ describe('MemoryVaultSlider Visual & Functional Tests', () => {
     }
   });
 
+  it('shows clear placeholders when station photos are unavailable', () => {
+    render(
+      <MemoryVaultSlider
+        waypoint={{
+          id: 'station-cape-town',
+          name: 'Cape Town',
+          memory_vault: {
+            before_image_url: '/images/stations/capetown-then.jpg',
+            after_image_url: '/images/stations/capetown-now.jpg',
+          },
+        }}
+      />,
+    );
+
+    fireEvent.error(screen.getByAltText('Historical archival view'));
+    fireEvent.error(screen.getByAltText('Modern view'));
+
+    expect(screen.getByRole('img', { name: 'Historical station photo unavailable' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Modern station photo unavailable' })).toBeInTheDocument();
+  });
+
   describe('trivia option quantum shuffle (Issue #39)', () => {
     afterEach(() => {
       vi.restoreAllMocks();

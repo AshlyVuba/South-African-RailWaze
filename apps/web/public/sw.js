@@ -11,7 +11,7 @@
 // would remove this duplication entirely; noted as a follow-up rather than
 // solved here to keep this ticket's scope to "make offline caching work."
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `railwaze-static-${CACHE_VERSION}`;
 const TILE_CACHE = `railwaze-tiles-${CACHE_VERSION}`;
 
@@ -39,6 +39,10 @@ const STATIC_INTEGRITY_ASSETS = [
     '/data/route.geojson',
     '/data/waypoints.geojson',
     '/data/memory-vault.json',
+    '/images/stations/pretoria-then.jpg',
+    '/images/stations/pretoria-now.jpg',
+    '/images/stations/matjiesfontein-then.jpg',
+    '/images/stations/matjiesfontein-now.jpg',
 ];
 
 async function sha256Hex(arrayBuffer) {
@@ -99,17 +103,12 @@ function contentUnavailableResponse(pathname) {
 }
 
 // --- Station media (Memory Vault images, Audio Capsule clips): -----------
-// These don't exist as real files yet - MemoryVaultSlider currently renders
-// emoji/CSS placeholders, not <img>/<audio> tags, and there is no
-// audio-capsules data file at all (see docs/DECISIONS.md). Listing
-// nonexistent URLs here would make cache.addAll() reject the ENTIRE
-// install step the moment a single 404 shows up, which would silently
-// break offline mode for everything, not just the missing media - so this
-// stays an empty, ready slot rather than a list of placeholder paths.
-// Once real files land under /media/memory-vault/<station>.jpg and
-// /media/audio/<station>.mp3 (or wherever the content pipeline puts them),
-// add their URLs here.
-const STATION_MEDIA_ASSETS = [];
+const STATION_MEDIA_ASSETS = [
+    '/images/stations/pretoria-then.jpg',
+    '/images/stations/pretoria-now.jpg',
+    '/images/stations/matjiesfontein-then.jpg',
+    '/images/stations/matjiesfontein-now.jpg',
+];
 
 // --- Map tiles: a real, install-time-safe slice of the actual corridor. --
 // Mirrors apps/web/src/lib/tileMath.ts (see comment above).
@@ -201,6 +200,28 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
+    // HTML navigation / root document: network-first with cache fallback, ensuring
+    // a newly deployed build/bundle is picked up immediately while preserving offline support.
+    if (request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+        event.respondWith(
+            (async () => {
+                try {
+                    const response = await fetch(request);
+                    if (response.ok) {
+                        const cache = await caches.open(STATIC_CACHE);
+                        cache.put(request, response.clone());
+                    }
+                    return response;
+                } catch {
+                    const cached = (await caches.match('/index.html')) || (await caches.match('/'));
+                    if (cached) return cached;
+                    return new Response('Offline and page not cached', { status: 504 });
+                }
+            })()
+        );
+        return;
+    }
+
     // Live API calls: network-first, falling back to cache only as a last
     // resort so a passenger still sees their last-known passport/waypoint
     // state rather than a hard error if the backend briefly drops.
@@ -246,8 +267,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Everything else (app shell, manifest, geojson, station media once it
-    // exists): cache-first, since these only change on a new deploy, not
+    // Everything else (app shell, manifest, geojson, station media): cache-first,
+    // since these only change on a new deploy, not
     // request-to-request. Tracked assets are SHA-256 verified before being
     // served - a corrupted or tampered cache entry never goes straight to
     // the page.

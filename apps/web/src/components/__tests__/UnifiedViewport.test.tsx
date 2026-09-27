@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UnifiedViewport } from '../UnifiedViewport';
+import { publishOperationsBroadcast } from '../../lib/operationsBroadcast';
 
 type MockWaypointFeature = {
   id?: string | number;
@@ -10,23 +11,28 @@ type MockWaypointFeature = {
 type MockMapCanvasProps = {
   waypointsGeoJson?: { features: MockWaypointFeature[] };
   onSelectWaypoint?: (station: { stationId: string; name: string; [key: string]: unknown }) => void;
+  onWaypointReached?: (waypointId: string) => void;
 };
 
 vi.mock('../MapCanvas', () => ({
-  MapCanvas: ({ waypointsGeoJson, onSelectWaypoint }: MockMapCanvasProps) => (
+  MapCanvas: ({ waypointsGeoJson, onSelectWaypoint, onWaypointReached }: MockMapCanvasProps) => (
     <div data-testid="map-canvas">
       {waypointsGeoJson?.features.map((feature) => {
         const properties = feature.properties ?? {};
         const id = String(properties.id ?? feature.id ?? '');
         const name = String(properties.name ?? 'Waypoint');
         return (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onSelectWaypoint?.({ ...properties, stationId: id, name })}
-          >
-            Select {name}
-          </button>
+          <div key={id}>
+            <button
+              type="button"
+              onClick={() => onSelectWaypoint?.({ ...properties, stationId: id, name })}
+            >
+              Select {name}
+            </button>
+            <button type="button" onClick={() => onWaypointReached?.(id)}>
+              Reach {name}
+            </button>
+          </div>
         );
       })}
     </div>
@@ -66,12 +72,10 @@ const mockWaypointsGeoJson = {
 };
 
 const mockMemoryVaultData = {
-  memory_vault_captions: [
-    { waypoint_id: 'station-pretoria', caption: 'Pretoria archive caption.' },
-    { waypoint_id: 'station-kimberley', caption: 'Kimberley archive caption.' },
-    { waypoint_id: 'station-matjiesfontein', caption: 'Matjiesfontein archive caption.' },
-    { waypoint_id: 'station-cape-town', caption: 'Hex River archive caption.' },
-  ],
+  'vault-station-pretoria': { waypoint_id: 'station-pretoria', caption: 'Pretoria archive caption.', then_image_url: '/images/stations/pretoria-then.jpg', now_image_url: '/images/stations/pretoria-now.jpg', then_year: 'circa 1893' },
+  'vault-station-kimberley': { waypoint_id: 'station-kimberley', caption: 'Kimberley archive caption.', then_image_url: '/images/stations/kimberley-then.jpg', now_image_url: '/images/stations/kimberley-now.jpg', then_year: 'circa 1875' },
+  'vault-station-matjiesfontein': { waypoint_id: 'station-matjiesfontein', caption: 'Matjiesfontein archive caption.', then_image_url: '/images/stations/matjiesfontein-then.jpg', now_image_url: '/images/stations/matjiesfontein-now.jpg', then_year: 'circa 1895' },
+  'vault-station-cape-town': { waypoint_id: 'station-cape-town', caption: 'Hex River archive caption.', then_image_url: '/images/stations/capetown-then.jpg', now_image_url: '/images/stations/capetown-now.jpg', then_year: 'circa 1880' },
 };
 
 const stationTrivia = [
@@ -82,7 +86,7 @@ const stationTrivia = [
 ];
 let rejectTriviaFetch = false;
 
-describe('UnifiedViewport Component (#37)', () => {
+describe('UnifiedViewport Component (#41)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
@@ -135,9 +139,14 @@ describe('UnifiedViewport Component (#37)', () => {
 
     // Check MapCanvas container renders
     expect(screen.getByTestId('map-canvas')).toBeInTheDocument();
+    const stationStops = screen.getByRole('navigation', { name: 'Corridor stations' });
+    expect(within(stationStops).getByRole('button', { name: 'Open Pretoria' })).toBeInTheDocument();
+    expect(within(stationStops).getByRole('button', { name: 'Open Kimberley' })).toBeInTheDocument();
+    expect(within(stationStops).getByRole('button', { name: 'Open Matjiesfontein' })).toBeInTheDocument();
+    expect(within(stationStops).getByRole('button', { name: 'Open Hex River / Cape Town' })).toBeInTheDocument();
 
     expect(screen.queryByTestId('memory-vault-card')).not.toBeInTheDocument();
-    fireEvent.click(await screen.findByRole('button', { name: 'Select Pretoria' }));
+    fireEvent.click(within(stationStops).getByRole('button', { name: 'Open Pretoria' }));
     expect(await screen.findByText('Pretoria archive caption.', {}, { timeout: 10000 })).toBeInTheDocument();
   });
 
@@ -152,13 +161,17 @@ describe('UnifiedViewport Component (#37)', () => {
     fireEvent.click(await screen.findByRole('button', { name: `Select ${name}` }));
     expect(screen.getByRole('heading', { name: name.toUpperCase() })).toBeInTheDocument();
     expect(screen.getByText(caption)).toBeInTheDocument();
+    expect(screen.getByAltText('Historical archival view')).toHaveAttribute(
+      'src',
+      `/images/stations/${waypointId === 'station-cape-town' ? 'capetown' : waypointId.replace('station-', '')}-then.jpg`,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Trivia' }));
     expect(await screen.findByText(question)).toBeInTheDocument();
     expect(globalThis.fetch).toHaveBeenCalledWith(
       `http://localhost:8000/waypoints/${waypointId}/trivia`
     );
-  });
+  }, 10000);
 
   it('shows a visible error when the trivia API cannot be reached', async () => {
     rejectTriviaFetch = true;
@@ -172,6 +185,30 @@ describe('UnifiedViewport Component (#37)', () => {
     );
   });
 
+  it('pops up a staff broadcast and links passengers to reassurance then back to the map', async () => {
+    render(<UnifiedViewport />);
+
+    publishOperationsBroadcast({
+      type: 'minor-delay',
+      message: 'Track maintenance is underway. You are safe and we will keep you updated.',
+      sentAtLabel: '06:10',
+    });
+
+    const notification = await screen.findByRole('status', { name: /Verified crew update/ });
+    expect(notification).toHaveTextContent('Track maintenance is underway.');
+    expect(within(notification).getByRole('link', { name: /view reassurance and updated eta/i })).toHaveAttribute(
+      'href',
+      '/?demo=operations&role=passenger',
+    );
+    expect(screen.getByTestId('map-canvas')).toBeVisible();
+    const stationStops = screen.getByRole('navigation', { name: 'Corridor stations' });
+    expect(within(stationStops).getAllByRole('button')).toHaveLength(4);
+
+    fireEvent.click(within(notification).getByRole('button', { name: /dismiss crew update/i }));
+    expect(screen.queryByRole('status', { name: /verified crew update/i })).not.toBeInTheDocument();
+    expect(screen.getByTestId('map-canvas')).toBeVisible();
+  });
+
   it('uses VITE_API_BASE_URL when configured', async () => {
     vi.stubEnv('VITE_API_BASE_URL', 'https://railwaze-api.example.test/');
     render(<UnifiedViewport />);
@@ -182,6 +219,65 @@ describe('UnifiedViewport Component (#37)', () => {
     expect(await screen.findByText('Pretoria question?')).toBeInTheDocument();
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'https://railwaze-api.example.test/waypoints/station-pretoria/trivia'
+    );
+  });
+
+  it('submits the original option index and session id to the trivia answer endpoint', async () => {
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('route.geojson')) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockRouteGeoJson) });
+      if (url.includes('waypoints.geojson')) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockWaypointsGeoJson) });
+      if (url.includes('memory-vault.json')) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockMemoryVaultData) });
+      if (url.includes('/trivia/answer')) return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ correct: true, correctOptionIndex: 1, explanation: 'That is correct.' }),
+      });
+      if (url.includes('/trivia')) return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(stationTrivia.filter((item) => item.waypoint_id === 'station-pretoria')),
+      });
+      return Promise.reject(new Error('Unknown endpoint'));
+    });
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+    render(<UnifiedViewport />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Select Pretoria' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Trivia' }));
+    await screen.findByText('Pretoria question?');
+    fireEvent.click(await screen.findByRole('button', { name: /A$/ }));
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/waypoints/station-pretoria/trivia/answer',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: expect.stringMatching(/"sessionId":"[0-9a-f-]{36}"/),
+        }),
+      );
+      expect(screen.getByText(/Correct — stamp awarded/)).toBeInTheDocument();
+      expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'railwaze:trivia-answered' }));
+    });
+  });
+
+  it.each([
+    ['station-pretoria', 'Pretoria'],
+    ['station-kimberley', 'Kimberley'],
+    ['station-matjiesfontein', 'Matjiesfontein'],
+    ['station-cape-town', 'Hex River / Cape Town'],
+  ])('shows the audio fallback when %s is reached without an audio file', async (waypointId, name) => {
+    render(<UnifiedViewport />);
+
+    fireEvent.click(await screen.findByRole('button', { name: `Reach ${name}` }));
+
+    const player = await screen.findByLabelText('Audio Capsule Player');
+    const audioElement = player.querySelector('audio');
+    expect(audioElement?.getAttribute('src')).toBe(`/audio/${waypointId}.mp3`);
+    if (audioElement) {
+      fireEvent.error(audioElement);
+    }
+
+    expect(await within(player).findByRole('status')).toHaveTextContent(
+      "Audio coming soon. This station's recording isn't available yet."
     );
   });
 });
