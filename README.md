@@ -169,5 +169,15 @@ npm test
 npm run build
 ```
 
+**Operations portal demo**
+```
+cd apps\web
+npm run demo
+npm run test:demo
+```
+`npm run demo` opens the portal directly at `/?demo=operations`; from the map viewport, use **OPS DEMO** to open it. To try the broadcast handoff, keep the main map open in one tab and open `/?demo=operations&role=staff` in another tab in the same browser. Staff updates then appear as a pop-up in the map tab. The reassurance page offers an explicit **Return to my journey** action.
+
+The portal includes passenger reassurance, a locally saved offline beacon, live simulated corridor telemetry, passenger broadcasts, ETA updates, and relief-transport actions. Broadcasts are saved in same-origin browser storage; this is a browser-local demo relay and does not publish to other devices.
+
 ---
 *#GKHack26*

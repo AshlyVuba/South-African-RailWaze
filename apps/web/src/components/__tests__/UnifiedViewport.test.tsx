@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UnifiedViewport } from '../UnifiedViewport';
+import { publishOperationsBroadcast } from '../../lib/operationsBroadcast';
 
 type MockWaypointFeature = {
   id?: string | number;
@@ -138,9 +139,14 @@ describe('UnifiedViewport Component (#41)', () => {
 
     // Check MapCanvas container renders
     expect(screen.getByTestId('map-canvas')).toBeInTheDocument();
+    const stationStops = screen.getByRole('navigation', { name: 'Corridor stations' });
+    expect(within(stationStops).getByRole('button', { name: 'Open Pretoria' })).toBeInTheDocument();
+    expect(within(stationStops).getByRole('button', { name: 'Open Kimberley' })).toBeInTheDocument();
+    expect(within(stationStops).getByRole('button', { name: 'Open Matjiesfontein' })).toBeInTheDocument();
+    expect(within(stationStops).getByRole('button', { name: 'Open Hex River / Cape Town' })).toBeInTheDocument();
 
     expect(screen.queryByTestId('memory-vault-card')).not.toBeInTheDocument();
-    fireEvent.click(await screen.findByRole('button', { name: 'Select Pretoria' }));
+    fireEvent.click(within(stationStops).getByRole('button', { name: 'Open Pretoria' }));
     expect(await screen.findByText('Pretoria archive caption.', {}, { timeout: 10000 })).toBeInTheDocument();
   });
 
@@ -177,6 +183,30 @@ describe('UnifiedViewport Component (#41)', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Unable to load station trivia. Check the API URL and your connection.'
     );
+  });
+
+  it('pops up a staff broadcast and links passengers to reassurance then back to the map', async () => {
+    render(<UnifiedViewport />);
+
+    publishOperationsBroadcast({
+      type: 'minor-delay',
+      message: 'Track maintenance is underway. You are safe and we will keep you updated.',
+      sentAtLabel: '06:10',
+    });
+
+    const notification = await screen.findByRole('status', { name: /Verified crew update/ });
+    expect(notification).toHaveTextContent('Track maintenance is underway.');
+    expect(within(notification).getByRole('link', { name: /view reassurance and updated eta/i })).toHaveAttribute(
+      'href',
+      '/?demo=operations&role=passenger',
+    );
+    expect(screen.getByTestId('map-canvas')).toBeVisible();
+    const stationStops = screen.getByRole('navigation', { name: 'Corridor stations' });
+    expect(within(stationStops).getAllByRole('button')).toHaveLength(4);
+
+    fireEvent.click(within(notification).getByRole('button', { name: /dismiss crew update/i }));
+    expect(screen.queryByRole('status', { name: /verified crew update/i })).not.toBeInTheDocument();
+    expect(screen.getByTestId('map-canvas')).toBeVisible();
   });
 
   it('uses VITE_API_BASE_URL when configured', async () => {

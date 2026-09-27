@@ -58,6 +58,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const trainMarkerRef = useRef<Marker | null>(null);
+  const waypointMarkersRef = useRef<Marker[]>([]);
   const lastTriggeredWpRef = useRef<string | null>(null);
 
   const lineFeature = routeGeoJson.features?.[0] ?? null;
@@ -127,9 +128,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             minzoom: 0,
             maxzoom: 19,
             paint: {
-              'raster-opacity': 0.85,
-              'raster-saturation': 0.18,
-              'raster-contrast': 0.05,
+              'raster-opacity': 0.96,
+              'raster-saturation': 0.42,
+              'raster-contrast': 0.14,
             },
           },
         ],
@@ -176,9 +177,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           type: 'line',
           source: 'rail-corridor',
           paint: {
-            'line-color': '#D97706',
-            'line-width': 8,
-            'line-opacity': 0.4,
+            'line-color': '#F59E0B',
+            'line-width': 10,
+            'line-opacity': 0.52,
             'line-blur': 3,
           },
         });
@@ -188,8 +189,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           type: 'line',
           source: 'rail-corridor',
           paint: {
-            'line-color': '#B45309',
-            'line-width': 3,
+            'line-color': '#FBBF24',
+            'line-width': 4,
           },
         });
       }
@@ -223,6 +224,31 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             'circle-stroke-width': 2.5,
             'circle-stroke-color': '#B45309',
           },
+        });
+
+        waypointMarkersRef.current = waypointsGeoJson.features.map((feature) => {
+          const properties = feature.properties ?? {};
+          const stationId = String(properties.id ?? feature.id ?? '');
+          const stationName = String(properties.name ?? 'Waypoint');
+          const markerButton = document.createElement('button');
+          markerButton.type = 'button';
+          markerButton.className = 'railwaze-waypoint-marker';
+          markerButton.textContent = stationName.replace('Hex River / ', '');
+          markerButton.setAttribute('aria-label', `Open ${stationName}`);
+          markerButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            onSelectWaypoint?.({
+              ...properties,
+              stationId,
+              name: stationName,
+            });
+          });
+          return new Marker({ element: markerButton, anchor: 'bottom' })
+            .setLngLat([
+              feature.geometry.coordinates[0],
+              feature.geometry.coordinates[1],
+            ])
+            .addTo(map);
         });
 
         map.on('click', 'waypoint-points', (event) => {
@@ -263,6 +289,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         trainMarkerRef.current.remove();
         trainMarkerRef.current = null;
       }
+      waypointMarkersRef.current.forEach((marker) => marker.remove());
+      waypointMarkersRef.current = [];
       map.remove();
       mapRef.current = null;
     };

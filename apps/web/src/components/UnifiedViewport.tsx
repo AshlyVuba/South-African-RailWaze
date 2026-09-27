@@ -10,9 +10,18 @@ import {
 import { AudioCapsule } from './AudioCapsule';
 import { PassportModal } from './PassportModal';
 import { ConnectivityBanner } from './ConnectivityBanner';
+import { ShieldCheck } from 'lucide-react';
 import { designTokens } from '../lib/designTokens';
 import { getApiBaseUrl } from '../lib/api';
 import { flushQueue, queuedRequest } from '../lib/offlineQueue';
+import {
+  dismissOperationsBroadcast,
+  isOperationsBroadcastDismissed,
+  OPERATIONS_BROADCAST_EVENT,
+  OPERATIONS_BROADCAST_STORAGE_KEY,
+  readOperationsBroadcast,
+  type OperationsBroadcast,
+} from '../lib/operationsBroadcast';
 
 const EMPTY_FEATURE_COLLECTION: FeatureCollection = {
   type: 'FeatureCollection',
@@ -53,6 +62,10 @@ const toWaypointItem = (
 };
 
 export const UnifiedViewport: React.FC = () => {
+  const [operationsAlert, setOperationsAlert] = useState<OperationsBroadcast | null>(() => {
+    const latest = readOperationsBroadcast();
+    return latest && !isOperationsBroadcastDismissed(latest.id) ? latest : null;
+  });
   const [routeGeoJson, setRouteGeoJson] = useState<FeatureCollection<LineString>>(
     EMPTY_FEATURE_COLLECTION as FeatureCollection<LineString>
   );
@@ -80,6 +93,36 @@ export const UnifiedViewport: React.FC = () => {
 
   const lastAudioWaypointIdRef = useRef<string | null>(null);
   const [sessionId] = useState(() => window.crypto.randomUUID());
+
+  useEffect(() => {
+    const syncOperationsAlert = (event?: Event) => {
+      if (event instanceof StorageEvent && event.key !== OPERATIONS_BROADCAST_STORAGE_KEY) {
+        return;
+      }
+      const latest = readOperationsBroadcast();
+      setOperationsAlert(
+        latest && !isOperationsBroadcastDismissed(latest.id) ? latest : null
+      );
+    };
+
+    window.addEventListener('storage', syncOperationsAlert);
+    window.addEventListener(OPERATIONS_BROADCAST_EVENT, syncOperationsAlert);
+    return () => {
+      window.removeEventListener('storage', syncOperationsAlert);
+      window.removeEventListener(OPERATIONS_BROADCAST_EVENT, syncOperationsAlert);
+    };
+  }, []);
+
+  const dismissOperationsAlert = () => {
+    if (!operationsAlert) return;
+    try {
+      dismissOperationsBroadcast(operationsAlert.id);
+      setOperationsAlert(null);
+    } catch (error) {
+      console.error('Unable to save the dismissed RailWaze update.', error);
+      setOperationsAlert(null);
+    }
+  };
 
   const handleWaypointSelect = useCallback((station: WaypointProperties) => {
     const feature = waypointsGeoJson.features.find(
@@ -279,6 +322,13 @@ export const UnifiedViewport: React.FC = () => {
           <ConnectivityBanner apiBaseUrl={getApiBaseUrl()} />
         </div>
 
+        <a
+          href="/?demo=operations"
+          className="pointer-events-auto inline-flex min-h-10 items-center rounded-xl border border-cyan-500/40 bg-slate-950/80 px-3 text-xs font-bold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-950/60"
+        >
+          OPS DEMO
+        </a>
+
         <button
           onClick={() => setShowPassport(true)}
           className={`${designTokens.elements.fire.button} pointer-events-auto`}
@@ -286,6 +336,37 @@ export const UnifiedViewport: React.FC = () => {
           PASSPORT
         </button>
       </header>
+
+      {operationsAlert && (
+        <aside
+          role="status"
+          aria-live="polite"
+          aria-label="Verified crew update"
+          className="absolute inset-x-3 top-[4.75rem] z-30 mx-auto max-w-2xl rounded-2xl border border-cyan-400/30 bg-slate-950/90 p-3 shadow-xl shadow-black/30 backdrop-blur-md sm:top-16 sm:p-4"
+        >
+          <div className="flex items-start gap-3">
+            <ShieldCheck size={19} className="mt-0.5 shrink-0 text-cyan-300" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">Verified crew update · You&apos;re safe</p>
+              <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-100">{operationsAlert.message}</p>
+              <a
+                href="/?demo=operations&role=passenger"
+                className="mt-2 inline-flex min-h-9 items-center rounded-lg bg-cyan-400 px-3 text-xs font-bold text-slate-950 transition hover:bg-cyan-300"
+              >
+                View reassurance and updated ETA
+              </a>
+            </div>
+            <button
+              type="button"
+              onClick={dismissOperationsAlert}
+              aria-label="Dismiss crew update"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* Memory Vault Card (Overlay Bottom) */}
       {activeWaypoint && (
@@ -312,8 +393,34 @@ export const UnifiedViewport: React.FC = () => {
       {/* Corridor Scrubber Slider */}
       <div
         data-testid="corridor-progress-panel"
-        className={`absolute bottom-4 left-1/2 z-20 box-border w-[92%] max-w-[375px] -translate-x-1/2 ${designTokens.shell.panel} ${designTokens.containers.card}`}
+        className={`absolute bottom-4 left-1/2 z-20 box-border w-[94%] max-w-[560px] -translate-x-1/2 ${designTokens.shell.panel} ${designTokens.containers.card}`}
       >
+        <nav aria-label="Corridor stations" className="mb-3 flex items-center justify-between gap-1 overflow-x-auto pb-1">
+          {waypointsGeoJson.features.map((feature, index) => {
+            const properties = feature.properties ?? {};
+            const stationId = String(properties.id ?? feature.id ?? '');
+            const stationName = typeof properties.name === 'string' ? properties.name : stationId;
+            const station = { ...properties, stationId, name: stationName } as WaypointProperties;
+            return (
+              <button
+                key={stationId}
+                type="button"
+                onClick={() => handleWaypointSelect(station)}
+                aria-label={`Open ${stationName}`}
+                className="group flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center"
+              >
+                <span className="flex w-full items-center">
+                  {index > 0 && <span className="h-px flex-1 bg-amber-500/50" />}
+                  <span className="h-3 w-3 shrink-0 rounded-full border-2 border-amber-300 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,.45)] transition group-hover:scale-125 group-hover:bg-cyan-300" />
+                  {index < waypointsGeoJson.features.length - 1 && <span className="h-px flex-1 bg-amber-500/50" />}
+                </span>
+                <span className="max-w-[82px] truncate text-[9px] font-bold uppercase tracking-wide text-slate-200 transition group-hover:text-cyan-200 sm:max-w-none sm:text-[10px]">
+                  {stationName.replace('Hex River / ', '')}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
         <div className={`mb-1.5 flex justify-between font-mono text-xs font-bold ${designTokens.elements.fire.accent}`}>
           <span>PROGRESS</span>
           <span>{Math.round(progress)}%</span>

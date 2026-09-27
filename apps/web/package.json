@@ -6,11 +6,13 @@
   "scripts": {
     "predev": "node scripts/generate-integrity-manifest.mjs",
     "dev": "vite",
+    "demo": "vite --open /?demo=operations",
     "prebuild": "node scripts/generate-integrity-manifest.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:demo": "vitest run src/__tests__/App.test.tsx src/components/__tests__/OperationsPortal.test.tsx src/components/__tests__/UnifiedViewport.test.tsx --maxWorkers=1 --pool=forks"
   },
   "dependencies": {
     "@noble/post-quantum": "^0.7.0",
@@ -19,6 +21,7 @@
     "@turf/distance": "^6.5.0",
     "@turf/helpers": "^6.5.0",
     "@turf/length": "^6.5.0",
+    "lucide-react": "^1.48.0",
     "maplibre-gl": "^6.11.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
