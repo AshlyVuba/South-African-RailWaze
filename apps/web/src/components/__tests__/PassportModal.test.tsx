@@ -3,17 +3,19 @@ import { vi, describe, beforeEach, afterEach, test, expect } from 'vitest';
 import { PassportModal, PassportState } from '../PassportModal';
 
 const mockPassportData: PassportState = {
-  session_id: '550e8400-e29b-41d4-a716-446655440000',
-  current_rank: 'Karoo Scout',
+  sessionId: '550e8400-e29b-41d4-a716-446655440000',
+  currentRank: 'Karoo Scout',
   score: 150,
-  collected_stamps: [
+  totalScore: 150,
+  collectedStamps: [
     {
-      stamp_id: 'stamp-matjiesfontein-01',
-      waypoint_id: 'matjiesfontein',
-      collected_at: '2026-09-22T10:00:00Z',
+      stampId: 'stamp-matjiesfontein-01',
+      waypointId: 'matjiesfontein',
+      collectedAt: '2026-09-22T10:00:00Z',
     },
   ],
-  completed_trivia_ids: ['trivia-matjiesfontein-01'],
+  stamps: [],
+  completedTriviaIds: ['trivia-matjiesfontein-01'],
 };
 
 describe('PassportModal Component', () => {

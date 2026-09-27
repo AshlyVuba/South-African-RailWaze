@@ -1,27 +1,33 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
 import { MapCanvas, type WaypointProperties } from './MapCanvas';
-import { MemoryVaultSlider, type TriviaQuestion, type WaypointItem } from './MemoryVaultSlider';
+import {
+  MemoryVaultSlider,
+  type TriviaAnswerResult,
+  type TriviaQuestion,
+  type WaypointItem,
+} from './MemoryVaultSlider';
 import { AudioCapsule } from './AudioCapsule';
 import { PassportModal } from './PassportModal';
 import { ConnectivityBanner } from './ConnectivityBanner';
 import { designTokens } from '../lib/designTokens';
+import { getApiBaseUrl } from '../lib/api';
+import { flushQueue, queuedRequest } from '../lib/offlineQueue';
 
 const EMPTY_FEATURE_COLLECTION: FeatureCollection = {
   type: 'FeatureCollection',
   features: [],
 };
-const getApiBaseUrl = () =>
-  (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
-interface MemoryVaultCaption {
+interface MemoryVaultEntry {
   waypoint_id: string;
+  then_image_url?: string;
+  now_image_url?: string;
+  then_year?: string;
   caption: string;
 }
 
-interface MemoryVaultCatalog {
-  memory_vault_captions: MemoryVaultCaption[];
-}
+type MemoryVaultCatalog = Record<string, MemoryVaultEntry>;
 
 const toWaypointItem = (
   feature: Feature<Point>,
@@ -30,14 +36,18 @@ const toWaypointItem = (
   const properties = feature.properties ?? {};
   const id = String(properties.id ?? feature.id ?? '');
   const name = typeof properties.name === 'string' ? properties.name : 'Waypoint';
-  const caption = catalog.memory_vault_captions.find((item) => item.waypoint_id === id)?.caption;
+  const vault = Object.values(catalog).find((item) => item.waypoint_id === id);
+  const year = vault?.then_year?.match(/\d{4}/)?.[0];
 
   return {
     id,
     name,
     km_mark: typeof properties.km_mark === 'number' ? properties.km_mark : undefined,
     memory_vault: {
-      caption: caption ?? `Historical archival perspective for ${name}.`,
+      before_image_url: vault?.then_image_url,
+      after_image_url: vault?.now_image_url,
+      caption: vault?.caption ?? `Historical archival perspective for ${name}.`,
+      year: year ? Number(year) : undefined,
     },
   };
 };
@@ -49,14 +59,15 @@ export const UnifiedViewport: React.FC = () => {
   const [waypointsGeoJson, setWaypointsGeoJson] = useState<FeatureCollection<Point>>(
     EMPTY_FEATURE_COLLECTION as FeatureCollection<Point>
   );
-  const [memoryVaultCatalog, setMemoryVaultCatalog] = useState<MemoryVaultCatalog>({
-    memory_vault_captions: [],
-  });
+  const [memoryVaultCatalog, setMemoryVaultCatalog] = useState<MemoryVaultCatalog>({});
   const [progress, setProgress] = useState<number>(0);
   const [activeWaypoint, setActiveWaypoint] = useState<WaypointItem | null>(null);
   const [triviaQuestion, setTriviaQuestion] = useState<TriviaQuestion | null>(null);
   const [triviaLoading, setTriviaLoading] = useState<boolean>(false);
+  const [triviaSubmitting, setTriviaSubmitting] = useState<boolean>(false);
+  const [triviaQueued, setTriviaQueued] = useState<boolean>(false);
   const [triviaError, setTriviaError] = useState<string | null>(null);
+  const [triviaAnswerResult, setTriviaAnswerResult] = useState<TriviaAnswerResult | null>(null);
   const [showPassport, setShowPassport] = useState<boolean>(false);
   const [activeAudio, setActiveAudio] = useState<{
     isOpen: boolean;
@@ -68,7 +79,7 @@ export const UnifiedViewport: React.FC = () => {
   } | null>(null);
 
   const lastAudioWaypointIdRef = useRef<string | null>(null);
-  const sessionId = 'transkaroo-session-01';
+  const [sessionId] = useState(() => window.crypto.randomUUID());
 
   const handleWaypointSelect = useCallback((station: WaypointProperties) => {
     const feature = waypointsGeoJson.features.find(
@@ -82,6 +93,8 @@ export const UnifiedViewport: React.FC = () => {
     setActiveWaypoint(toWaypointItem(feature, memoryVaultCatalog));
     setTriviaQuestion(null);
     setTriviaError(null);
+    setTriviaAnswerResult(null);
+    setTriviaQueued(false);
   }, [memoryVaultCatalog, waypointsGeoJson]);
 
   // DoD 1: Fetch real route and waypoint datasets on mount
@@ -103,7 +116,7 @@ export const UnifiedViewport: React.FC = () => {
           ]);
           const catalog: MemoryVaultCatalog = memoryVaultRes.ok
             ? await memoryVaultRes.json()
-            : { memory_vault_captions: [] };
+            : {};
 
           if (isMounted) {
             setRouteGeoJson(routeData);
@@ -132,6 +145,8 @@ export const UnifiedViewport: React.FC = () => {
     setTriviaLoading(true);
     setTriviaError(null);
     setTriviaQuestion(null);
+    setTriviaAnswerResult(null);
+    setTriviaQueued(false);
 
     try {
       const response = await fetch(
@@ -157,6 +172,56 @@ export const UnifiedViewport: React.FC = () => {
     }
   }, [activeWaypoint?.id]);
 
+  const handleTriviaAnswer = useCallback(async (selectedOptionIndex: number) => {
+    const waypointId = activeWaypoint?.id;
+    if (!waypointId || !triviaQuestion) {
+      return;
+    }
+
+    setTriviaSubmitting(true);
+    setTriviaError(null);
+    setTriviaAnswerResult(null);
+    const result = await queuedRequest<TriviaAnswerResult>(
+      'trivia-answers',
+      `${getApiBaseUrl()}/waypoints/${encodeURIComponent(waypointId)}/trivia/answer`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          selectedOptionIndex,
+        }),
+      },
+    );
+
+    if (result.status === 'ok' && result.data) {
+      setTriviaAnswerResult(result.data);
+      setTriviaQueued(false);
+      window.dispatchEvent(new CustomEvent('railwaze:trivia-answered'));
+    } else if (result.status === 'queued') {
+      setTriviaQueued(true);
+    } else {
+      setTriviaError(result.error ?? 'Unable to submit your answer.');
+    }
+    setTriviaSubmitting(false);
+  }, [activeWaypoint?.id, sessionId, triviaQuestion]);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      flushQueue('trivia-answers').then(({ succeeded, stillQueued }) => {
+        if (succeeded > 0) {
+          window.dispatchEvent(new CustomEvent('railwaze:trivia-answered'));
+        }
+        if (stillQueued === 0) {
+          setTriviaQueued(false);
+        }
+      });
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
   // Issue #20 DoD: Geofence trigger to auto-open matching Audio Capsule once
   const handleWaypointReached = useCallback(
     (waypointId: string) => {
@@ -171,6 +236,10 @@ export const UnifiedViewport: React.FC = () => {
       const matchedWaypoint = toWaypointItem(matchedFeature, memoryVaultCatalog);
 
       setActiveWaypoint(matchedWaypoint);
+      setTriviaQuestion(null);
+      setTriviaError(null);
+      setTriviaAnswerResult(null);
+      setTriviaQueued(false);
 
       if (lastAudioWaypointIdRef.current !== waypointId) {
         lastAudioWaypointIdRef.current = waypointId;
@@ -207,7 +276,7 @@ export const UnifiedViewport: React.FC = () => {
         </div>
 
         <div className="pointer-events-auto">
-          <ConnectivityBanner />
+          <ConnectivityBanner apiBaseUrl={getApiBaseUrl()} />
         </div>
 
         <button
@@ -225,8 +294,12 @@ export const UnifiedViewport: React.FC = () => {
             waypoint={activeWaypoint}
             triviaQuestion={triviaQuestion}
             triviaLoading={triviaLoading}
+            triviaSubmitting={triviaSubmitting}
+            triviaQueued={triviaQueued}
             triviaError={triviaError}
+            triviaAnswerResult={triviaAnswerResult}
             onTriviaRequest={handleTriviaRequest}
+            onTriviaAnswer={handleTriviaAnswer}
             onClose={() => {
               setActiveWaypoint(null);
               setTriviaQuestion(null);

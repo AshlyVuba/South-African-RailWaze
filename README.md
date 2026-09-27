@@ -31,11 +31,11 @@ Domestic rail tourists, backpackers, scenic travelers, and school groups riding 
 |---|---|
 | 3D scenic railsurface map | Real-time topographic map tracking elevation, biome shifts, and day/night cycles as the train progresses |
 | Geofenced audio capsules | 45–60 second localized folklore and history clips that trigger automatically at waypoints |
-| Memory vault ("then vs. now") | Interactive slider comparing historical station photography (1880s–1950s) with modern views |
+| Memory vault ("then vs. now") | Interactive slider comparing available historical station photography with modern views; missing photos show an explicit placeholder |
 | Trans-Karoo passport | Station micro-trivia that awards collectible digital stamps and traveler rank (Stoker → Rail Legend) |
 | ⚛ Quantum-shuffled trivia | Trivia answer order is shuffled using live true-random bytes from the ANU Quantum Random Number Generator, with an on-screen indicator so the quantum call is visibly verifiable on camera |
 | 🔏 Post-quantum passport signatures | Each passport response carries an ML-DSA (FIPS 204) signature, verified client-side before showing a "✓ PQC-verified" badge — a second, independent quantum-tech contribution alongside the QRNG shuffle |
-| Offline-first PWA | Service-worker caching of app-shell assets and a demo-safe slice of map tiles, with SHA-256 integrity checks on cached data; audio/photo precaching is planned once real media assets exist |
+| Offline-first PWA | Service-worker caching of app-shell assets, available station archive photos, and a demo-safe slice of map tiles, with SHA-256 integrity checks on cached data; playable audio recordings are still pending |
 
 ## MVP route anchor waypoints
 
@@ -62,13 +62,13 @@ South African RailWaze's bonus quantum-tech contribution is a genuine, live inte
 - **Live entropy source:** `quantumShuffle()` (`apps/web/src/lib/quantumRandom.ts`) calls the [ANU Quantum Random Number Generator API](https://qrng.anu.edu.au/) to fetch true-random bytes, then runs a Fisher–Yates shuffle over the displayed trivia answer options using that quantum entropy.
 - **Demoable on camera:** the trivia card shows a live "⚛ Quantum-shuffled (ANU QRNG, live)" indicator when the call succeeds, so the integration is visibly verifiable during the pitch rather than only narrated.
 - **Graceful, tested fallback:** any QRNG failure (offline, rate-limited, malformed response) is caught inside `quantumShuffle()` itself and silently substitutes `Math.random()` — it never throws or blocks the UI. This is covered by dedicated tests simulating a rejected fetch, a 429 response, and a malformed payload (`lib/__tests__/quantumRandom.test.ts`).
-- **Honest scope:** each shuffled item still carries its original server-assigned index, so the integration is ready to seed answer-submission logic once that flow is built, rather than being cosmetic-only.
+- **Answer submission:** each shuffled item retains its original server-assigned index; selecting an option submits that index to the API, and a correct answer updates the passport with a server-awarded stamp. Failed network submissions are queued and retried when connectivity returns.
 
 ### Post-quantum signature verification (passport stamps)
 
 A second, independent quantum-tech contribution, scoped narrowly so it doesn't touch scoring, transport security, or the existing passport contract:
 
-- **Real, standardized algorithm, not hand-rolled crypto:** ML-DSA (Dilithium, NIST FIPS 204). The backend (`apps/api/app/security/pqc.py`) signs with [`dilithium-py`](https://pypi.org/project/dilithium-py/) (a pure-Python implementation that passes the official FIPS 204 KAT test vectors); the frontend (`apps/web/src/lib/pqcVerify.ts`) verifies with [`@noble/post-quantum`](https://www.npmjs.com/package/@noble/post-quantum) — two independent implementations of the same NIST standard, not one library trusting itself.
+- **Real, standardized algorithm, not hand-rolled crypto:** ML-DSA (Dilithium, NIST FIPS 204). The backend (`apps/api/app/security/pqc.py`) signs with [`dilithium-py`](https://pypi.org/project/dilithium-py/) (a pure-Python implementation that passes the official FIPS 204 KAT test vectors); the frontend (`apps/web/src/lib/pqcSignature.ts`) verifies with [`@noble/post-quantum`](https://www.npmjs.com/package/@noble/post-quantum) — two independent implementations of the same NIST standard, not one library trusting itself.
 - **Additive, not breaking:** `GET /passport/{sessionId}` gains one new optional field, `signature` (hex-encoded), over the existing response. Nothing else about the contract, rank/scoring logic, or TLS/transport changes.
 - **Demoable on camera:** the passport modal shows a "✓ PQC-verified (ML-DSA)" badge when the signature checks out client-side, or "⚠ signature unavailable" otherwise — mirroring the QRNG badge pattern so both quantum-tech contributions are visibly verifiable, not just narrated.
 - **Graceful, tested fallback:** a missing signature, an unbundled public key, malformed hex, or a genuinely invalid/tampered signature all resolve the same way — the passport still renders normally, it just never shows the verified badge. Covered by tests on both sides, including a simulated tampered-payload case.
@@ -105,7 +105,7 @@ south-african-railwaze/
 │   │   │   └── generate-integrity-manifest.mjs
 │   │   ├── src/
 │   │   │   ├── components/          # MapCanvas, AudioCapsule, MemoryVaultSlider, PassportModal, UnifiedViewport, ConnectivityBanner
-│   │   │   ├── lib/                 # connectivity, offlineQueue, integrity, tileMath, quantumRandom, pqcVerify, pqcPublicKey, designTokens
+│   │   │   ├── lib/                 # api, connectivity, offlineQueue, integrity, tileMath, quantumRandom, pqcSignature, pqcPublicKey, designTokens
 │   │   │   └── main.tsx
 │   │   └── package.json
 │   └── api/                        # FastAPI backend

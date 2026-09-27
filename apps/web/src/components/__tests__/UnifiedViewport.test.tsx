@@ -71,12 +71,10 @@ const mockWaypointsGeoJson = {
 };
 
 const mockMemoryVaultData = {
-  memory_vault_captions: [
-    { waypoint_id: 'station-pretoria', caption: 'Pretoria archive caption.' },
-    { waypoint_id: 'station-kimberley', caption: 'Kimberley archive caption.' },
-    { waypoint_id: 'station-matjiesfontein', caption: 'Matjiesfontein archive caption.' },
-    { waypoint_id: 'station-cape-town', caption: 'Hex River archive caption.' },
-  ],
+  'vault-station-pretoria': { waypoint_id: 'station-pretoria', caption: 'Pretoria archive caption.', then_image_url: '/images/stations/pretoria-then.jpg', now_image_url: '/images/stations/pretoria-now.jpg', then_year: 'circa 1893' },
+  'vault-station-kimberley': { waypoint_id: 'station-kimberley', caption: 'Kimberley archive caption.', then_image_url: '/images/stations/kimberley-then.jpg', now_image_url: '/images/stations/kimberley-now.jpg', then_year: 'circa 1875' },
+  'vault-station-matjiesfontein': { waypoint_id: 'station-matjiesfontein', caption: 'Matjiesfontein archive caption.', then_image_url: '/images/stations/matjiesfontein-then.jpg', now_image_url: '/images/stations/matjiesfontein-now.jpg', then_year: 'circa 1895' },
+  'vault-station-cape-town': { waypoint_id: 'station-cape-town', caption: 'Hex River archive caption.', then_image_url: '/images/stations/capetown-then.jpg', now_image_url: '/images/stations/capetown-now.jpg', then_year: 'circa 1880' },
 };
 
 const stationTrivia = [
@@ -157,6 +155,10 @@ describe('UnifiedViewport Component (#41)', () => {
     fireEvent.click(await screen.findByRole('button', { name: `Select ${name}` }));
     expect(screen.getByRole('heading', { name: name.toUpperCase() })).toBeInTheDocument();
     expect(screen.getByText(caption)).toBeInTheDocument();
+    expect(screen.getByAltText('Historical archival view')).toHaveAttribute(
+      'src',
+      `/images/stations/${waypointId === 'station-cape-town' ? 'capetown' : waypointId.replace('station-', '')}-then.jpg`,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Trivia' }));
     expect(await screen.findByText(question)).toBeInTheDocument();
@@ -188,6 +190,43 @@ describe('UnifiedViewport Component (#41)', () => {
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'https://railwaze-api.example.test/waypoints/station-pretoria/trivia'
     );
+  });
+
+  it('submits the original option index and session id to the trivia answer endpoint', async () => {
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('route.geojson')) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockRouteGeoJson) });
+      if (url.includes('waypoints.geojson')) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockWaypointsGeoJson) });
+      if (url.includes('memory-vault.json')) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockMemoryVaultData) });
+      if (url.includes('/trivia/answer')) return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ correct: true, correctOptionIndex: 1, explanation: 'That is correct.' }),
+      });
+      if (url.includes('/trivia')) return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(stationTrivia.filter((item) => item.waypoint_id === 'station-pretoria')),
+      });
+      return Promise.reject(new Error('Unknown endpoint'));
+    });
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+    render(<UnifiedViewport />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Select Pretoria' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Trivia' }));
+    await screen.findByText('Pretoria question?');
+    fireEvent.click(await screen.findByRole('button', { name: /A$/ }));
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/waypoints/station-pretoria/trivia/answer',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: expect.stringMatching(/"sessionId":"[0-9a-f-]{36}"/),
+        }),
+      );
+      expect(screen.getByText(/Correct — stamp awarded/)).toBeInTheDocument();
+      expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'railwaze:trivia-answered' }));
+    });
   });
 
   it.each([

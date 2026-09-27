@@ -1,21 +1,25 @@
 import { useEffect, useState, useCallback } from 'react';
 import { queuedRequest, flushQueue } from '../lib/offlineQueue';
 import { verifyPassportSignature, type PqcVerificationStatus } from '../lib/pqcSignature';
+import { getApiBaseUrl } from '../lib/api';
 
 export type TravelerRank = 'Stoker' | 'Track Master' | 'Karoo Scout' | 'Rail Legend';
 
 export interface PassportStamp {
-  stamp_id: string;
-  waypoint_id: string;
-  collected_at: string;
+  stampId: string;
+  waypointId: string;
+  collectedAt: string;
 }
 
 export interface PassportState {
-  session_id: string;
-  current_rank: TravelerRank;
+  sessionId: string;
+  currentRank: TravelerRank;
   score: number;
-  collected_stamps: PassportStamp[];
-  completed_trivia_ids: string[];
+  totalScore: number;
+  collectedStamps: PassportStamp[];
+  stamps: PassportStamp[];
+  completedTriviaIds: string[];
+  signature?: string | null;
 }
 
 interface PassportModalProps {
@@ -29,7 +33,7 @@ export const PassportModal = ({
                                 sessionId,
                                 isOpen,
                                 onClose,
-                                apiBaseUrl = 'http://localhost:8000',
+                                apiBaseUrl = getApiBaseUrl(),
                               }: PassportModalProps) => {
   const [passport, setPassport] = useState<PassportState | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -94,24 +98,14 @@ export const PassportModal = ({
   // Post-quantum (ML-DSA) tamper-evidence check on whatever passport is
   // currently displayed. Purely additive: verification never blocks or
   // delays showing the passport itself, it only controls a small badge.
-  // Raw JSON from the API uses camelCase field names (sessionId,
-  // currentRank, totalScore, collectedStamps[].stampId, signature) - see
-  // the comment on SignablePassportPayload in lib/pqcSignature.ts for why
-  // that differs from this file's own PassportState interface above.
+  // Verify the exact camelCase payload returned and signed by the API.
   useEffect(() => {
     if (!passport) {
       setPqcStatus('unavailable');
       return;
     }
-    const raw = passport as unknown as {
-      sessionId: string;
-      currentRank: string;
-      totalScore: number;
-      collectedStamps: Array<{ stampId: string }>;
-      signature?: string | null;
-    };
     let cancelled = false;
-    verifyPassportSignature(raw).then((status: PqcVerificationStatus) => {
+    verifyPassportSignature(passport).then((status: PqcVerificationStatus) => {
       if (!cancelled) setPqcStatus(status);
     });
     return () => {
@@ -181,7 +175,7 @@ export const PassportModal = ({
                 Traveler Rank
               </span>
                   <span className="text-base font-semibold tracking-wide text-amber-500 uppercase block">
-                {passport.current_rank}
+                {passport.currentRank}
               </span>
                   <span className="block text-xs font-mono text-neutral-400 mt-1">
                 Score: {passport.score} pts
@@ -200,28 +194,28 @@ export const PassportModal = ({
                 {/* Collected Stamps */}
                 <div>
                   <h3 className="text-xs font-mono uppercase tracking-wider text-neutral-400 mb-3 border-b border-white/10 pb-1.5 flex items-center justify-between">
-                    <span>Collected Stamps ({passport.collected_stamps.length})</span>
+                    <span>Collected Stamps ({passport.collectedStamps.length})</span>
                   </h3>
 
-                  {passport.collected_stamps.length === 0 ? (
+                  {passport.collectedStamps.length === 0 ? (
                       <div className="text-center py-6 text-sm text-neutral-400 italic">
                         No stamps collected yet. Solve waystation trivia along the corridor to earn stamps!
                       </div>
                   ) : (
                       <div className="grid grid-cols-2 gap-3">
-                        {passport.collected_stamps.map((stamp) => (
+                        {passport.collectedStamps.map((stamp) => (
                             <div
-                                key={stamp.stamp_id}
+                                key={stamp.stampId}
                                 className="border border-amber-500/30 rounded-lg p-3 flex flex-col items-center text-center bg-amber-500/10 hover:bg-amber-500/15 transition-colors"
                             >
                               <div className="w-12 h-12 rounded-full border-2 border-amber-500 flex items-center justify-center mb-1.5 text-xs font-bold font-mono text-amber-400 bg-amber-500/20 uppercase shadow-[0_0_12px_rgba(245,158,11,0.25)]">
-                                {stamp.waypoint_id.replace(/^wp-/, '').slice(0, 3)}
+                                {stamp.waypointId.replace(/^wp-/, '').slice(0, 3)}
                               </div>
                               <span className="font-semibold text-xs text-neutral-200 uppercase tracking-wide">
-                        {stamp.waypoint_id}
+                        {stamp.waypointId}
                       </span>
                               <span className="text-xs font-mono text-neutral-400 mt-0.5">
-                        {new Date(stamp.collected_at).toLocaleDateString()}
+                        {new Date(stamp.collectedAt).toLocaleDateString()}
                       </span>
                             </div>
                         ))}

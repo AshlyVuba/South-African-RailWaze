@@ -36,48 +36,127 @@
       },
       "additionalProperties": false
     },
+    "TriviaQuestionPublic": {
+      "type": "object",
+      "required": ["id", "waypoint_id", "question", "options"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^trivia-[a-z0-9-]+$" },
+        "waypoint_id": { "type": "string" },
+        "question": { "type": "string" },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 4,
+          "maxItems": 4
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnswerSubmission": {
+      "type": "object",
+      "required": ["sessionId", "selectedOptionIndex"],
+      "properties": {
+        "sessionId": { "type": "string" },
+        "selectedOptionIndex": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "StampAward": {
+      "type": "object",
+      "required": ["stampId", "waypointId", "collectedAt", "waypointName", "badgeIcon", "awardedAt"],
+      "properties": {
+        "stampId": { "type": "string" },
+        "waypointId": { "type": "string" },
+        "collectedAt": { "type": "string", "format": "date-time" },
+        "waypointName": { "type": "string" },
+        "badgeIcon": { "type": "string" },
+        "awardedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "AnswerResult": {
+      "type": "object",
+      "required": ["correct", "correctOptionIndex", "explanation", "stampAwarded"],
+      "properties": {
+        "correct": { "type": "boolean" },
+        "correctOptionIndex": { "type": "integer", "minimum": 0 },
+        "explanation": { "type": "string" },
+        "stampAwarded": {
+          "oneOf": [
+            { "$ref": "#/definitions/StampAward" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "TravelerRank": {
       "type": "string",
       "enum": ["Stoker", "Track Master", "Karoo Scout", "Rail Legend"]
     },
     "PassportStamp": {
       "type": "object",
-      "required": ["stamp_id", "waypoint_id", "collected_at"],
+      "required": ["stampId", "waypointId", "collectedAt", "waypointName", "badgeIcon", "awardedAt"],
       "properties": {
-        "stamp_id": { "type": "string" },
-        "waypoint_id": { "type": "string" },
-        "collected_at": {
+        "stampId": { "type": "string" },
+        "waypointId": { "type": "string" },
+        "collectedAt": {
           "type": "string",
           "format": "date-time"
-        }
+        },
+        "waypointName": { "type": "string" },
+        "badgeIcon": { "type": "string" },
+        "awardedAt": { "type": "string", "format": "date-time" }
       },
       "additionalProperties": false
     },
     "PassportState": {
       "type": "object",
-      "required": ["session_id", "current_rank", "score", "collected_stamps", "completed_trivia_ids"],
+      "required": [
+        "sessionId",
+        "currentRank",
+        "rank",
+        "score",
+        "totalScore",
+        "collectedStamps",
+        "stamps",
+        "completedTriviaIds",
+        "signature"
+      ],
       "properties": {
-        "session_id": {
+        "sessionId": {
           "type": "string",
           "format": "uuid"
         },
-        "current_rank": {
+        "currentRank": {
+          "$ref": "#/definitions/TravelerRank"
+        },
+        "rank": {
           "$ref": "#/definitions/TravelerRank"
         },
         "score": {
           "type": "integer",
           "minimum": 0
         },
-        "collected_stamps": {
+        "totalScore": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "collectedStamps": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PassportStamp"
           }
         },
-        "completed_trivia_ids": {
+        "stamps": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PassportStamp" }
+        },
+        "completedTriviaIds": {
           "type": "array",
           "items": { "type": "string" }
-        }
+        },
+        "signature": { "type": ["string", "null"] }
       },
       "additionalProperties": false
     }

@@ -75,6 +75,25 @@ describe('offlineQueue', () => {
         expect(getQueueLength('trivia-answers')).toBe(0);
     });
 
+    test('flushQueue replays JSON request bodies without double-encoding them', async () => {
+        globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+        const payload = { sessionId: 'session', selectedOptionIndex: 2 };
+        await queuedRequest('trivia-answers', 'http://localhost:8000/answer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        const fetchMock = vi.fn().mockResolvedValue({ ok: true } as Response);
+        globalThis.fetch = fetchMock;
+        await flushQueue('trivia-answers');
+
+        expect(fetchMock).toHaveBeenCalledWith('http://localhost:8000/answer', expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify(payload),
+        }));
+    });
+
     test('flushQueue leaves still-failing requests in the queue', async () => {
         globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
         await queuedRequest('trivia-answers', 'http://localhost:8000/answer', { method: 'POST' });

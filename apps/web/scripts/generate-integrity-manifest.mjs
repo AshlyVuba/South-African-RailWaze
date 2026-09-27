@@ -33,9 +33,10 @@ const ASSET_PATHS = [
     '/data/route.geojson',
     '/data/waypoints.geojson',
     '/data/memory-vault.json',
+    '/images/stations/pretoria-then.jpg',
+    '/images/stations/pretoria-now.jpg',
     '/images/stations/matjiesfontein-then.jpg',
     '/images/stations/matjiesfontein-now.jpg',
-    '/audio/audio-matjiesfontein.mp3',
 ];
 
 const manifest = {};

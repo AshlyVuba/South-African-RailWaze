@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
 import type { FeatureCollection, LineString, Point } from 'geojson';
-import maplibregl, { Map, Marker } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+import type { Map } from 'maplibre-gl';
+import { Marker } from 'maplibre-gl';
 import length from '@turf/length';
 import along from '@turf/along';
 import bearing from '@turf/bearing';
@@ -148,7 +150,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       zoom: 5.5,
       pitch: 65,
       bearing: -20,
-      antialias: true,
       maxPitch: 85,
     });
 

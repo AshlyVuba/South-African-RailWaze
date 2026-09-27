@@ -25,11 +25,7 @@ export type PqcVerificationStatus = 'verified' | 'failed' | 'unavailable';
  * Shape of the fields the backend actually signs (see
  * `_canonical_signable_payload` in apps/api/app/security/pqc.py). This
  * intentionally uses the raw camelCase field names from the API's JSON
- * response (sessionId, currentRank, totalScore, collectedStamps[].stampId)
- * rather than PassportModal's own snake_case `PassportState`/`PassportStamp`
- * interfaces - those are a display-layer shape with extra fields (like
- * `rank` vs `current_rank` compatibility aliases) that were never part of
- * what got signed, so reusing them here would sign the wrong bytes.
+ * response (sessionId, currentRank, totalScore, collectedStamps[].stampId).
  */
 export interface SignablePassportPayload {
     sessionId: string;

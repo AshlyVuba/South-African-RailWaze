@@ -25,13 +25,23 @@ export interface TriviaQuestion {
   options: string[];
 }
 
+export interface TriviaAnswerResult {
+  correct: boolean;
+  correctOptionIndex: number;
+  explanation: string;
+}
+
 export interface MemoryVaultSliderProps {
   stationId?: string;
   waypoint?: WaypointItem | null;
   triviaQuestion?: TriviaQuestion | null;
   triviaLoading?: boolean;
+  triviaSubmitting?: boolean;
+  triviaQueued?: boolean;
   triviaError?: string | null;
+  triviaAnswerResult?: TriviaAnswerResult | null;
   onTriviaRequest?: () => void;
+  onTriviaAnswer?: (selectedOptionIndex: number) => void;
   onClose?: () => void;
   className?: string;
   style?: React.CSSProperties;
@@ -42,13 +52,19 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
                                                                       waypoint,
                                                                       triviaQuestion = null,
                                                                       triviaLoading = false,
+                                                                      triviaSubmitting = false,
+                                                                      triviaQueued = false,
                                                                       triviaError = null,
+                                                                      triviaAnswerResult = null,
                                                                       onTriviaRequest,
+                                                                      onTriviaAnswer,
                                                                       onClose,
                                                                       className = '',
                                                                       style,
                                                                     }) => {
   const [splitPos, setSplitPos] = useState<number>(50);
+  const [historicalImageFailed, setHistoricalImageFailed] = useState(false);
+  const [modernImageFailed, setModernImageFailed] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isDragging = useRef<boolean>(false);
 
@@ -56,9 +72,8 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
   // options is shuffled using a genuine quantum-sourced random number from
   // the ANU QRNG server (see lib/quantumRandom.ts), not a classical PRNG.
   // Purely cosmetic - falls back to Math.random() without throwing or
-  // blocking if the QRNG API is unreachable, and never affects which
-  // option is actually correct (no answer-submission logic exists in this
-  // component yet, so there's nothing for it to affect beyond display).
+  // blocking if the QRNG API is unreachable. Each shuffled option retains
+  // its original index so the answer endpoint receives the correct choice.
   const [shuffledOptions, setShuffledOptions] = useState<ShuffledItem<string>[]>([]);
   const [randomSource, setRandomSource] = useState<RandomSource>('classical');
 
@@ -96,6 +111,11 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
   const caption = vault.caption || 'Historical archival perspective.';
   const year = vault.year || 1900;
   const stationName = waypoint?.name || stationId || 'Corridor Waypoint';
+
+  useEffect(() => {
+    setHistoricalImageFailed(false);
+    setModernImageFailed(false);
+  }, [beforeUrl, afterUrl]);
 
   const calculatePosition = useCallback((clientX: number) => {
     if (!containerRef.current) return;
@@ -167,8 +187,15 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
               src={afterUrl}
               alt="Modern view"
               draggable={false}
+              hidden={modernImageFailed}
+              onError={() => setModernImageFailed(true)}
               className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           />
+          {modernImageFailed && (
+            <div role="img" aria-label="Modern station photo unavailable" className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-950 text-xs font-mono text-neutral-400">
+              Modern station photo unavailable
+            </div>
+          )}
 
           <div
               className="absolute inset-y-0 left-0 overflow-hidden border-r-2 border-amber-500 pointer-events-none"
@@ -178,11 +205,23 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
                 src={beforeUrl}
                 alt="Historical archival view"
                 draggable={false}
+                hidden={historicalImageFailed}
+                onError={() => setHistoricalImageFailed(true)}
                 className="absolute inset-y-0 left-0 h-full object-cover max-w-none"
                 style={{
                   width: containerRef.current ? containerRef.current.clientWidth : 375,
                 }}
             />
+            {historicalImageFailed && (
+              <div
+                role="img"
+                aria-label="Historical station photo unavailable"
+                className="absolute inset-y-0 left-0 flex h-full items-center justify-center bg-neutral-800 text-center text-xs font-mono text-neutral-400"
+                style={{ width: containerRef.current ? containerRef.current.clientWidth : 375 }}
+              >
+                Historical station photo unavailable
+              </div>
+            )}
           </div>
 
           <span className="absolute top-3 left-3 bg-neutral-950/80 border border-amber-500/40 text-amber-400 font-mono text-xs font-semibold px-2.5 py-1 rounded-lg backdrop-blur-sm shadow-sm pointer-events-none">
@@ -226,11 +265,32 @@ export const MemoryVaultSlider: React.FC<MemoryVaultSliderProps> = ({
                             ? '⚛ Quantum-shuffled (ANU QRNG, live)'
                             : '↻ Classical shuffle (quantum source unavailable)'}
                       </p>
-                      <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-neutral-300">
-                        {shuffledOptions.map((option) => (
-                            <li key={option.originalIndex}>{option.value}</li>
+                      <ol className="mt-2 space-y-2 text-sm text-neutral-300">
+                        {shuffledOptions.map((option, index) => (
+                            <li key={option.originalIndex}>
+                              <button
+                                type="button"
+                                onClick={() => onTriviaAnswer?.(option.originalIndex)}
+                                disabled={!onTriviaAnswer || triviaSubmitting || triviaQueued || triviaAnswerResult?.correct}
+                                className="w-full rounded-lg border border-white/10 px-3 py-2 text-left hover:border-amber-500/60 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                <span className="mr-2 font-mono text-amber-400">{index + 1}.</span>
+                                {option.value}
+                              </button>
+                            </li>
                         ))}
                       </ol>
+                      {triviaSubmitting && <p role="status" className="mt-2 text-sm text-neutral-400">Submitting answer...</p>}
+                      {triviaQueued && (
+                        <p role="status" className="mt-2 text-sm text-amber-300">
+                          You&apos;re offline — your answer is queued and will sync when you&apos;re back online.
+                        </p>
+                      )}
+                      {triviaAnswerResult && (
+                        <p role="status" className={`mt-2 text-sm ${triviaAnswerResult.correct ? 'text-emerald-300' : 'text-rose-300'}`}>
+                          {triviaAnswerResult.correct ? 'Correct — stamp awarded.' : 'Not quite.'} {triviaAnswerResult.explanation}
+                        </p>
+                      )}
                     </div>
                 )}
               </div>
